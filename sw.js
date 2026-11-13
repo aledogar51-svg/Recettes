@@ -1,7 +1,7 @@
 // Service worker minimal : l'appli s'ouvre même sans réseau (les recettes
 // déjà chargées sont gardées sur le téléphone par app.js).
 // Réseau d'abord, copie locale en secours : les mises à jour arrivent tout de suite.
-const CACHE = 'recettes-1.8'; // même numéro que APP_VERSION dans app.js
+const CACHE = 'recettes-1.9'; // même numéro que APP_VERSION dans app.js
 const FICHIERS = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -16,7 +16,8 @@ self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return; // Apps Script, polices… : pas de cache
   e.respondWith(
-    fetch(e.request).then((r) => {
+    // « no-cache » : toujours vérifier auprès de GitHub s'il y a une nouvelle version
+    fetch(e.request.mode === 'navigate' ? e.request.url : e.request, { cache: 'no-cache' }).then((r) => {
       const copie = r.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copie));
       return r;

@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.8';
+const APP_VERSION = '1.9';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -818,7 +818,7 @@ document.addEventListener('touchend', (e) => {
 
 window.addEventListener('hashchange', () => { fermerFeuille(); rendre(); if (!['cuisine'].includes(route().vue)) window.scrollTo(0, 0); });
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
 
 rendre();
 charger(false);
