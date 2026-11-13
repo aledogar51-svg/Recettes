@@ -15,6 +15,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Applique le thème avant l'affichage (évite un flash blanc en mode sombre)
+    try {
+      var t = JSON.parse(localStorage.getItem('rec:theme') || '"auto"');
+      if (t === 'sombre' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.dataset.theme = 'dark';
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <main id="app" aria-live="polite"></main>

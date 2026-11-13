@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.11';
+const APP_VERSION = '1.12';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -24,21 +24,21 @@ const urlImage = (u) => (/^https?:\/\//i.test(u || '') ? u.replace(/[\s"'()\\]/g
 
 // Couleur et icône par catégorie (affichées quand la recette n'a pas de photo)
 const STYLE_CAT = {
-  plat: ['#EBCFB0', '#7A4A1C', '<path d="M3 18h18"/><path d="M5 18a7 7 0 0 1 14 0"/><path d="M12 11V8"/><path d="M10 8h4"/>'],
-  entree: ['#CFE0C8', '#245A40', '<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8.5 7.5c0-1.2 1-1.3 1-2.5S8.5 3.8 8.5 3M12 7.5c0-1.2 1-1.3 1-2.5S12 3.8 12 3M15.5 7.5c0-1.2 1-1.3 1-2.5s-1-1.2-1-2"/>'],
-  dessert: ['#F4D5CB', '#8A2E0E', '<path d="M6 12h12l-1.6 8H7.6z"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 5V3"/><path d="M10 16v1M14 16v1"/>'],
-  boisson: ['#D3E3EC', '#24506A', '<path d="M4 4h16l-8 9z"/><path d="M12 13v7M8 20h8"/><path d="m15 7 4-5"/><circle cx="8" cy="6.2" r="1"/>'],
-  apero: ['#F2E1A6', '#6B5008', '<path d="m3 21 11-11"/><circle cx="16" cy="8" r="4"/><circle cx="16.8" cy="7.2" r="1.2"/>'],
-  boulangerie: ['#EADBB8', '#6E4F15', '<path d="M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4 2 2 0 0 1-2 2v6H6v-6a2 2 0 0 1-2-2z"/><path d="M9 10.5l1 2M13 10.5l1 2"/>'],
-  autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>']
+  plat: ['#EBCFB0', '#7A4A1C', '<path d="M3 18h18"/><path d="M5 18a7 7 0 0 1 14 0"/><path d="M12 11V8"/><path d="M10 8h4"/>', '#3B2C1E', '#E8B98A'],
+  entree: ['#CFE0C8', '#245A40', '<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8.5 7.5c0-1.2 1-1.3 1-2.5S8.5 3.8 8.5 3M12 7.5c0-1.2 1-1.3 1-2.5S12 3.8 12 3M15.5 7.5c0-1.2 1-1.3 1-2.5s-1-1.2-1-2"/>', '#22382B', '#9FD3B5'],
+  dessert: ['#F4D5CB', '#8A2E0E', '<path d="M6 12h12l-1.6 8H7.6z"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 5V3"/><path d="M10 16v1M14 16v1"/>', '#3E2620', '#F2A58A'],
+  boisson: ['#D3E3EC', '#24506A', '<path d="M4 4h16l-8 9z"/><path d="M12 13v7M8 20h8"/><path d="m15 7 4-5"/><circle cx="8" cy="6.2" r="1"/>', '#1F3240', '#9CC6E0'],
+  apero: ['#F2E1A6', '#6B5008', '<path d="m3 21 11-11"/><circle cx="16" cy="8" r="4"/><circle cx="16.8" cy="7.2" r="1.2"/>', '#3A3214', '#EBCB6E'],
+  boulangerie: ['#EADBB8', '#6E4F15', '<path d="M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4 2 2 0 0 1-2 2v6H6v-6a2 2 0 0 1-2-2z"/><path d="M9 10.5l1 2M13 10.5l1 2"/>', '#38301E', '#E3C78E'],
+  autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>', '#22382D', '#8FD0AE']
 };
 const styleCat = (r) => STYLE_CAT[norm(r.categorie).replace(/[^a-z]/g, '')] || STYLE_CAT.autre;
-function fondImage(r) { return `background-color:${styleCat(r)[0]}`; }
+function fondImage(r) { const c = styleCat(r); return `background-color:${c[0]};--c2:${c[1]};--c3:${c[3]};--c4:${c[4]}`; }
 // Icône de catégorie toujours dessinée ; la photo (si elle se charge) vient par-dessus
 function initiale(r, taille = 28) {
-  const [, fg, d] = styleCat(r);
+  const d = styleCat(r)[2];
   const u = urlImage(r.photo);
-  return `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="${fg}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>` +
+  return `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>` +
     (u ? `<img class="photo" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '');
 }
 
@@ -86,6 +86,7 @@ const S = {
   planning: lire('cache-planning', []),
   dossierUrl: lire('dossier', ''),
   versionScript: lire('version-script', ''),
+  theme: lire('theme', 'auto'),
   favoris: new Set(lire('favoris', [])),
   filtre: { q: '', cat: 'Tout', app: 'Tous' },
   portions: {},      // id → nombre de personnes choisi
@@ -109,6 +110,16 @@ const S = {
 })();
 
 const recette = (id) => S.recettes.find((r) => r.id === id);
+
+// Thème clair / sombre / automatique (suit le réglage du téléphone)
+const mqSombre = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function appliquerTheme() {
+  const sombre = S.theme === 'sombre' || (S.theme === 'auto' && mqSombre && mqSombre.matches);
+  document.documentElement.dataset.theme = sombre ? 'dark' : 'light';
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = route().vue === 'cuisine' ? '#14201A' : sombre ? '#111815' : '#F3F5F2';
+}
+if (mqSombre) mqSombre.addEventListener('change', appliquerTheme);
 
 /* ------------------------------------------------------------------ */
 /*  Serveur                                                            */
@@ -317,6 +328,7 @@ function rendre() {
   document.body.classList.toggle('cuisine', r.vue === 'cuisine');
   document.body.classList.toggle('sans-nav', r.vue === 'recette' || r.vue === 'cuisine');
   if (r.vue !== 'cuisine') garderEcran(false);
+  appliquerTheme();
 
   let html;
   if (!SCRIPT_URL) html = vueSansServeur();
@@ -619,6 +631,11 @@ function vueReglages() {
     <p class="texte" style="font-size:13px">${S.recettes.length} recette${S.recettes.length > 1 ? 's' : ''} enregistrée${S.recettes.length > 1 ? 's' : ''} sur ce téléphone.</p>
   </section>
   <section class="section">
+    <div class="section-titre"><h2>Affichage</h2></div>
+    <div class="segments" role="group" aria-label="Thème">${[['clair', 'Clair'], ['sombre', 'Sombre'], ['auto', 'Automatique']].map(([v, l]) => `<button class="${S.theme === v ? 'actif' : ''}" aria-pressed="${S.theme === v}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div>
+    <p class="texte" style="font-size:13px">Automatique : suit le mode clair ou sombre de ton téléphone.</p>
+  </section>
+  <section class="section">
     <div class="section-titre"><h2>Version</h2></div>
     <div class="info" style="gap:6px">
       <span>Appli</span><b>${APP_VERSION} · ${APP_DATE}</b>
@@ -791,6 +808,7 @@ document.addEventListener('click', async (ev) => {
       } catch (e) { if (fen) fen.close(); toast(e.message); }
       b.disabled = false; break;
     }
+    case 'theme': S.theme = b.dataset.v; ecrire('theme', S.theme); rendre(); break;
     case 'maj':
       toast('Mise à jour…');
       try {

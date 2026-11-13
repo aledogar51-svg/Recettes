@@ -9,6 +9,12 @@
   --vert: #2F6B4F;
   --vert-fonce: #1F4A36;
   --vert-pale: #E6EEE8;
+  --vert-btn: #2F6B4F;
+  --chip-bg: #FBF1D6;
+  --chip-fg: #6B4F07;
+  --err-bg: #FDECE4;
+  --err-fg: #8A2C0A;
+  --toast: #1B2420;
   --safran: #E0A526;
   --coeur: #C2410C;
   --nuit: #14201A;
@@ -19,6 +25,31 @@
   --nav-h: 72px;
   --bas: env(safe-area-inset-bottom, 0px);
 }
+/* ---------- Mode sombre ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fond: #111815;
+  --carte: #1B2621;
+  --encre: #E8EDE9;
+  --doux: #A9B5AE;
+  --pale: #7F8B85;
+  --ligne: #33413A;
+  --ligne2: #28342E;
+  --vert: #8FD0AE;
+  --vert-fonce: #B5E3CB;
+  --vert-pale: #233A2E;
+  --vert-btn: #2F6B4F;
+  --chip-bg: #3A3115;
+  --chip-fg: #F2C964;
+  --err-bg: #3D1F15;
+  --err-fg: #F5B9A2;
+  --toast: #34443C;
+  --coeur: #F27A4A;
+}
+:root[data-theme="dark"] .segments button.actif { background: #2C3A33; }
+:root[data-theme="dark"] .feuille-fond { background: rgba(0,0,0,.6); }
+:root[data-theme="dark"] .vignette, :root[data-theme="dark"] .carte-prog .img, :root[data-theme="dark"] .hero { background-color: var(--c3) !important; color: var(--c4) !important; }
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--fond); color: var(--encre); font-family: Inter, system-ui, sans-serif; font-size: 16px; }
 body { min-height: 100vh; overscroll-behavior-y: contain; }
@@ -47,7 +78,7 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .puces { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
 .puces::-webkit-scrollbar { display: none; }
 .puce { height: 36px; padding: 0 16px; border-radius: 18px; border: 1px solid var(--ligne); background: var(--carte); font-weight: 500; font-size: 14px; white-space: nowrap; flex: none; }
-.puce.actif { background: var(--vert); border-color: var(--vert); color: #fff; font-weight: 600; }
+.puce.actif { background: var(--vert-btn); border-color: var(--vert-btn); color: #fff; font-weight: 600; }
 
 .segments { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: var(--ligne2); border-radius: 14px; padding: 4px; }
 .segments button { height: 38px; border: none; border-radius: 11px; background: transparent; font-weight: 500; font-size: 14px; color: var(--doux); }
@@ -59,7 +90,7 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .lien { font-size: 14px; font-weight: 600; text-decoration: none; background: none; border: none; color: var(--vert); padding: 8px 0; }
 
 /* ---------- Bandeau choix ---------- */
-.bandeau { margin: 16px 20px 0; background: var(--vert); color: #fff; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.bandeau { margin: 16px 20px 0; background: var(--vert-btn); color: #fff; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .bandeau span { flex: 1; }
 .bandeau button { background: rgba(255,255,255,.18); color: #fff; border: none; border-radius: 10px; height: 36px; padding: 0 12px; font-weight: 600; }
 
@@ -81,10 +112,10 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .quand { font-size: 12px; font-weight: 600; color: var(--vert); text-transform: uppercase; letter-spacing: .5px; }
 
 .vide { text-align: center; color: var(--doux); padding: 32px 20px; line-height: 1.5; }
-.erreur { margin: 16px 20px 0; background: #FDECE4; color: #8A2C0A; border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
+.erreur { margin: 16px 20px 0; background: var(--err-bg); color: var(--err-fg); border-radius: 14px; padding: 12px 14px; font-size: 14px; line-height: 1.4; }
 
 /* ---------- FAB ---------- */
-.fab { position: fixed; right: max(20px, calc(50% - 260px)); bottom: calc(var(--nav-h) + var(--bas) + 18px); width: 60px; height: 60px; border-radius: 20px; background: var(--vert); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(47,107,79,.35); z-index: 5; }
+.fab { position: fixed; right: max(20px, calc(50% - 260px)); bottom: calc(var(--nav-h) + var(--bas) + 18px); width: 60px; height: 60px; border-radius: 20px; background: var(--vert-btn); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(47,107,79,.35); z-index: 5; }
 
 /* ---------- Navigation ---------- */
 .nav { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--nav-h) + var(--bas)); padding-bottom: var(--bas); background: var(--carte); border-top: 1px solid var(--ligne2); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; z-index: 10; }
@@ -122,7 +153,7 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .chip-ico { display: inline-flex; align-items: center; padding: 3px 7px; }
 .picto { display: block; }
 .reglages .grille b .picto { color: #F2C964; margin-top: 2px; }
-.chip { font-size: 13px; font-weight: 600; background: #FBF1D6; color: #6B4F07; border-radius: 8px; padding: 4px 8px; }
+.chip { font-size: 13px; font-weight: 600; background: var(--chip-bg); color: var(--chip-fg); border-radius: 8px; padding: 4px 8px; }
 
 .notes { background: var(--carte); border-radius: 16px; padding: 14px; line-height: 1.5; white-space: pre-line; font-size: 15px; }
 .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -131,7 +162,7 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 
 .barre-bas { position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 20px calc(18px + var(--bas)); background: var(--carte); border-top: 1px solid var(--ligne2); display: flex; gap: 10px; z-index: 10; justify-content: center; }
 .barre-bas > * { max-width: 520px; }
-.btn-plein { flex: 1; height: 56px; border-radius: 16px; background: var(--vert); color: #fff; border: none; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 17px; }
+.btn-plein { flex: 1; height: 56px; border-radius: 16px; background: var(--vert-btn); color: #fff; border: none; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 17px; }
 .btn-plein:disabled { opacity: .6; }
 .btn-carre { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--ligne); background: var(--carte); color: var(--vert); display: flex; align-items: center; justify-content: center; flex: none; text-decoration: none; }
 
@@ -193,9 +224,10 @@ body.cuisine { background: var(--nuit); }
 @keyframes monte { from { transform: translateY(40px); opacity: 0; } }
 .feuille h2 { font-size: 22px; font-weight: 800; }
 
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--bas) + 90px); background: var(--encre); color: #fff; border-radius: 14px; padding: 12px 16px; font-size: 14px; z-index: 40; max-width: calc(100% - 40px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--bas) + 90px); background: var(--toast); color: #fff; border-radius: 14px; padding: 12px 16px; font-size: 14px; z-index: 40; max-width: calc(100% - 40px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
 
 /* Photo par-dessus l'icône de catégorie */
 .vignette, .carte-prog .img, .hero { position: relative; overflow: hidden; }
 img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hero .btn-rond { z-index: 1; }
+.vignette, .carte-prog .img, .hero { color: var(--c2); }
