@@ -387,11 +387,17 @@ function extraireRecette_(html, url) {
   if (!recette) return null;
 
   const texte = function (s) { return nettoyer_(s); };
-  const ingredients = (recette.recipeIngredient || recette.ingredients || []).map(function (i) { return { t: texte(i) }; })
+  const ingredients = (recette.recipeIngredient || recette.ingredients || []).map(function (i) { return { t: ingredient_(texte(i)) }; })
     .filter(function (i) { return i.t; });
 
-  const etapes = [];
-  aplatirInstructions_(recette.recipeInstructions, etapes);
+  // Les étapes de la page (avec les icônes Thermomix : cuillère, sens inverse…) sont
+  // plus complètes que celles du JSON-LD quand elles existent (Cookomix notamment).
+  let etapes = etapesDepuisHtml_(html);
+  if (!etapes.length) aplatirInstructions_(recette.recipeInstructions, etapes);
+  const astuces = [];
+  const reA = /<div[^>]*class="[^"]*msgbox-astuce[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
+  let a;
+  while ((a = reA.exec(html))) { const t = nettoyer_(a[1]); if (t) astuces.push('Astuce : ' + t); }
 
   let image = recette.image;
   if (Array.isArray(image)) image = image[0];
@@ -408,7 +414,7 @@ function extraireRecette_(html, url) {
   else if (/cookeo/i.test(url) || /cookeo|cuisson sous pression|mode dorer/.test(tout)) appareil = 'Cookeo';
 
   return {
-    titre: texte(recette.name) || 'Recette importée',
+    titre: (texte(recette.name) || 'Recette importée').replace(/\s+(au|avec le|avec la|version)\s+(thermomix|tm\d+|cookeo|companion)\s*$/i, ''),
     categorie: categorie_(recette.recipeCategory, recette.name),
     appareil: appareil,
     portions: mp ? mp[0] : '',
@@ -417,8 +423,50 @@ function extraireRecette_(html, url) {
     source: url,
     photo: image ? String(image) : '',
     ingredients: ingredients,
-    etapes: etapes.map(function (e) { return e.section ? e : { t: e.t, reglages: [] }; })
+    etapes: etapes.map(function (e) { return e.section ? e : { t: e.t, reglages: e.reglages || [] }; }),
+    notes: astuces.join('\n')
   };
+}
+
+/** « Eau - 50 grammes » (format Cookomix) → « 50 g d'eau ». */
+function ingredient_(s) {
+  const m = s.match(/^(.+?)\s+-\s+(\d[\s\S]*)$/);
+  if (!m) return s;
+  const q = m[2].trim().replace(/\bgrammes?\b/i, 'g').replace(/\bkilogrammes?\b/i, 'kg');
+  let n = m[1].trim();
+  n = n.charAt(0).toLowerCase() + n.slice(1);
+  if (/^[\d.,\/\s]+$/.test(q)) return q + ' ' + n;              // « 2 échalotes »
+  return q + (/^[aeiouyhéèêàâîôû]/i.test(n) ? " d'" : ' de ') + n; // « 1 pincée de sel »
+}
+
+const ICONES_ = { step_spoon: 'vitesse cuillère', rotate_cw_2: 'sens inverse', rotate_ccw: 'sens inverse' };
+function icone_(n) {
+  if (ICONES_[n]) return ICONES_[n];
+  if (/rotate|reverse|inverse/.test(n)) return 'sens inverse';
+  if (/spoon|cuill/.test(n)) return 'vitesse cuillère';
+  if (/knead|petrin/.test(n)) return 'mode pétrin';
+  if (/turbo/.test(n)) return 'turbo';
+  return n.replace(/^step_/, '').replace(/_\d+$/, '').replace(/_/g, ' ');
+}
+
+/** Étapes lues dans la liste HTML de la page, réglages Thermomix séparés. */
+function etapesDepuisHtml_(html) {
+  const m = html.match(/<div[^>]*class="[^"]*\binstructions\b[^"]*"[^>]*>\s*<ol[^>]*>([\s\S]*?)<\/ol>/i);
+  if (!m || !/<b>/.test(m[1])) return [];
+  const sortie = [];
+  const reLi = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+  let li;
+  while ((li = reLi.exec(m[1]))) {
+    let c = li[1].replace(/<i[^>]*class="[^"]*icon-([a-z0-9_]+)[^"]*"[^>]*>\s*<\/i>/gi, function (_, n) { return ' ' + icone_(n) + ' '; });
+    let reglages = [];
+    c = c.replace(/<span[^>]*>((?:\s*<b>[\s\S]*?<\/b>\s*\/?)+)\s*<\/span>/i, function (_, inner) {
+      reglages = nettoyer_(inner).split('/').map(function (x) { return x.trim(); }).filter(String);
+      return ' ';
+    });
+    const t = nettoyer_(c).replace(/\s+([.,;!])/g, '$1');
+    if (t || reglages.length) sortie.push({ t: t || 'Programmer le Thermomix', reglages: reglages });
+  }
+  return sortie;
 }
 
 function trouverRecette_(o) {
