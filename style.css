@@ -119,6 +119,9 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .etape .num { width: 28px; height: 28px; border-radius: 14px; background: var(--vert-pale); color: var(--vert); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
 .etape p { margin: 0; line-height: 1.45; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip-ico { display: inline-flex; align-items: center; padding: 3px 7px; }
+.picto { display: block; }
+.reglages .grille b .picto { color: #F2C964; margin-top: 2px; }
 .chip { font-size: 13px; font-weight: 600; background: #FBF1D6; color: #6B4F07; border-radius: 8px; padding: 4px 8px; }
 
 .notes { background: var(--carte); border-radius: 16px; padding: 14px; line-height: 1.5; white-space: pre-line; font-size: 15px; }
@@ -146,7 +149,7 @@ body.cuisine { background: var(--nuit); }
 .texte-etape { margin: 0; font-family: var(--titre); font-weight: 600; font-size: 28px; line-height: 1.25; letter-spacing: -0.3px; }
 .reglages { background: var(--nuit2); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 .reglages .lbl { font-size: 13px; font-weight: 600; color: #B7C4BD; text-transform: uppercase; letter-spacing: .6px; }
-.reglages .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+.reglages .grille { display: flex; flex-wrap: wrap; gap: 10px 18px; }
 .reglages .grille div { display: flex; flex-direction: column; gap: 2px; }
 .reglages .grille span { font-size: 12px; color: #B7C4BD; }
 .reglages .grille b { font-family: var(--titre); font-weight: 800; font-size: 26px; }

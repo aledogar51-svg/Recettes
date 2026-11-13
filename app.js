@@ -52,6 +52,14 @@ const I = {
   partager: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>'
 };
 
+// Pictogrammes des réglages Thermomix (dessinés pour l'appli)
+function picto(txt, t) {
+  const n = norm(txt);
+  if (/cuill/.test(n)) return `<svg class="picto" width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" role="img" aria-label="Vitesse cuillère"><title>Vitesse cuillère</title><ellipse cx="8.2" cy="8.2" rx="3.6" ry="5.4" transform="rotate(-45 8.2 8.2)" fill="currentColor" stroke="none"/><path d="M11.6 11.6 20 20" stroke-width="2.6"/></svg>`;
+  if (/inverse/.test(n)) return `<svg class="picto" width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Sens inverse"><title>Sens inverse</title><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 3.5V8h4.5"/></svg>`;
+  return '';
+}
+
 /* ------------------------------------------------------------------ */
 /*  État                                                               */
 /* ------------------------------------------------------------------ */
@@ -198,8 +206,8 @@ function analyserReglages(e, appareil) {
     const mK = t.match(/cuisson sous pression|mode dorer|dorer|mijoter|maintien au chaud|cuisson douce/i);
     if (/cookeo/.test(app) && mK) res.extra.push(mK[0].charAt(0).toUpperCase() + mK[0].slice(1));
   }
-  if (/sens inverse/i.test(e.t) && !res.extra.some((x) => /inverse/i.test(x))) res.extra.push('Sens inverse');
-  res.extra = res.extra.map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+  res.inverse = /sens inverse/i.test(e.t) || res.extra.some((x) => /inverse/i.test(x));
+  res.extra = res.extra.filter((x) => !/inverse/i.test(x)).map((x) => x.charAt(0).toUpperCase() + x.slice(1));
   return res;
 }
 
@@ -446,8 +454,9 @@ function vueRecette(id) {
     if (e.section) return `<li class="sous-titre">${esc(e.section)}</li>`;
     num++;
     const g = analyserReglages(e, r.appareil);
-    const chips = [g.temps, g.temp, g.vitesse && 'Vitesse ' + g.vitesse, ...g.extra].filter(Boolean);
-    return `<li class="etape"><span class="num">${num}</span><div><p>${esc(e.t)}</p>${chips.length ? `<div class="chips">${chips.map((c) => `<span class="chip">${esc(c)}</span>`).join('')}</div>` : ''}</div></li>`;
+    const chips = [g.temps, g.temp, g.inverse && 'sens inverse', g.vitesse && 'Vitesse ' + g.vitesse, ...g.extra].filter(Boolean)
+      .map((c) => (picto(c, 18) ? `<span class="chip chip-ico">${picto(c, 18)}</span>` : `<span class="chip">${esc(c)}</span>`));
+    return `<li class="etape"><span class="num">${num}</span><div><p>${esc(e.t)}</p>${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}</div></li>`;
   }).join('');
   const bring = r.source && /^https?:/.test(r.source)
     ? `<a class="btn-carre" href="https://api.getbring.com/rest/bringrecipes/deeplink?url=${encodeURIComponent(r.source)}&source=web&baseQuantity=${base || 4}&requestedQuantity=${n || 4}" target="_blank" rel="noopener" aria-label="Envoyer les ingrédients dans Bring!">${I.panier}</a>`
@@ -498,7 +507,8 @@ function vueCuisine(id, n) {
   const utiles = r.ingredients.filter((i) => i.t && citeDans(i.t, mots)).map((i) => ajuster(i.t, ratio));
   const sec = secondes(g.temps) || (g.temps ? 0 : secondes(e.t));
   const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : '';
-  const grille = [['Temps', g.temps], ['Température', g.temp], ['Vitesse', g.vitesse]].filter((x) => x[1]);
+  const grille = [['Temps', g.temps], ['Temp.', g.temp], ['Sens', g.inverse && 'inverse'], ['Vitesse', g.vitesse]].filter((x) => x[1])
+    .map(([k, v]) => [k, picto(v, 34) || esc(v)]);
   return `<div class="cuisine-v" id="cuisine">
     <div class="haut">
       <a class="btn-rond" href="#/r/${esc(id)}" aria-label="Quitter le mode cuisine">${I.fermer}</a>
@@ -512,8 +522,8 @@ function vueCuisine(id, n) {
     <p class="texte-etape">${esc(e.t)}</p>
     ${grille.length || g.extra.length ? `<div class="reglages">
       <span class="lbl">Réglages${nomApp ? ' ' + nomApp : ''}</span>
-      ${grille.length ? `<div class="grille">${grille.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
-      ${g.extra.length ? `<div class="extra">${g.extra.map((x) => `<span>${/inverse/i.test(x) ? I.inverse + ' ' : ''}${esc(x)}</span>`).join('')}</div>` : ''}
+      ${grille.length ? `<div class="grille">${grille.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>` : ''}
+      ${g.extra.length ? `<div class="extra">${g.extra.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
     </div>` : ''}
     ${utiles.length ? `<div class="pour-etape">${utiles.map(esc).join(' · ')}</div>` : ''}
     ${sec >= 60 || (S.minuteur) ? `<button id="btn-minuteur" class="minuteur" data-act="minuteur" data-s="${sec}" data-texte="${sec >= 60 ? 'Minuteur ' + libDuree(sec) : 'Minuteur en cours'}">${I.chrono}<span>${sec >= 60 ? 'Minuteur ' + libDuree(sec) : ''}</span></button>` : ''}
