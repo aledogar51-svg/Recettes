@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.15';
+const APP_VERSION = '1.16';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -492,9 +492,6 @@ function htmlNutrition(r) {
   const perso = S.maPortion[r.id];
   // facteur = ma portion / portion de la recette
   const facteur = p ? (perso || p.g) / p.g : (perso || 1);
-  const libPortion = p
-    ? `${fmt(perso || p.g)} g`
-    : `${formatNombre(facteur)} portion${facteur > 1 ? 's' : ''}`;
   const standard = !perso || (p ? perso === p.g : perso === 1);
   const kcal = nombre(r.calories);
   return `<div class="nutri">
@@ -502,7 +499,9 @@ function htmlNutrition(r) {
     ${[['Lipides', r.lipides], ['Glucides', r.glucides], ['Protéines', r.proteines]].filter((x) => x[1]).map(([k, v]) => `<div class="macro"><span>${k}</span><b>${fmt(nombre(v) * facteur, true)} g</b></div>`).join('')}
     <div class="ma-portion">
       <div><span class="lbl-p">Ma portion</span><small>${p ? `1 portion = ${p.estime ? '≈ ' : ''}${fmt(p.g)} g${kcal ? ` · ${fmt(kcal / p.g * 100)} kcal / 100 g` : ''}` : 'poids de la portion inconnu'}</small></div>
-      <div class="stepper"><button data-act="ma-portion" data-d="-1" aria-label="Diminuer ma portion">−</button><output style="width:auto;min-width:64px">${libPortion}</output><button data-act="ma-portion" data-d="1" aria-label="Augmenter ma portion">+</button></div>
+      <div class="stepper"><button data-act="ma-portion" data-d="-1" aria-label="Diminuer ma portion">−</button>${p
+        ? `<input class="val" type="number" inputmode="numeric" min="10" max="5000" step="10" value="${Math.round(perso || p.g)}" data-champ="ma-portion" aria-label="Ma portion en grammes"><span class="unite">g</span>`
+        : `<input class="val" type="number" inputmode="decimal" min="0.25" max="10" step="0.25" value="${facteur}" data-champ="ma-portion" aria-label="Ma portion en nombre de portions"><span class="unite">port.</span>`}<button data-act="ma-portion" data-d="1" aria-label="Augmenter ma portion">+</button></div>
     </div>
     ${standard ? '' : '<button class="lien" data-act="ma-portion" data-d="0" style="grid-column:1/-1;text-align:left;padding:0">Revenir à 1 portion</button>'}
   </div>`;
@@ -549,7 +548,7 @@ function vueRecette(id) {
     ${infos.length ? `<div class="infos">${infos.map(([k, v]) => `<div class="info"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
     ${htmlNutrition(r)}
     ${base ? `<div class="portions"><b>Pour ${n} personne${n > 1 ? 's' : ''}</b>
-      <div class="stepper"><button data-act="portions" data-d="-1" aria-label="Moins de personnes">−</button><output>${n}</output><button data-act="portions" data-d="1" aria-label="Plus de personnes">+</button></div></div>` : ''}
+      <div class="stepper"><button data-act="portions" data-d="-1" aria-label="Moins de personnes">−</button><input class="val" type="number" inputmode="numeric" min="1" max="50" value="${n}" data-champ="personnes" aria-label="Nombre de personnes"><button data-act="portions" data-d="1" aria-label="Plus de personnes">+</button></div></div>` : ''}
     <div class="segments" role="tablist">
       <button role="tab" class="${S.onglet === 'ing' ? 'actif' : ''}" aria-selected="${S.onglet === 'ing'}" data-act="onglet" data-v="ing">Ingrédients (${r.ingredients.filter((i) => !i.section).length})</button>
       <button role="tab" class="${S.onglet === 'etapes' ? 'actif' : ''}" aria-selected="${S.onglet === 'etapes'}" data-act="onglet" data-v="etapes">Étapes (${num})</button>
@@ -874,6 +873,22 @@ document.addEventListener('click', async (ev) => {
 });
 
 document.addEventListener('change', (ev) => {
+  // Saisie directe : nombre de personnes ou « ma portion »
+  const champ = ev.target.closest('[data-champ]');
+  if (champ) {
+    const r = recette(route().id); if (!r) return;
+    const v = parseFloat(String(champ.value).replace(',', '.'));
+    if (champ.dataset.champ === 'personnes') {
+      if (v >= 1) S.portions[r.id] = Math.min(50, Math.round(v));
+    } else {
+      const p = poidsPortion(r);
+      if (!(v > 0)) delete S.maPortion[r.id];
+      else S.maPortion[r.id] = p ? Math.min(5000, Math.max(10, Math.round(v))) : Math.min(10, Math.max(0.25, v));
+      ecrire('ma-portion', S.maPortion);
+    }
+    rendre();
+    return;
+  }
   const c = ev.target.closest('[data-coche]');
   if (!c) return;
   const id = route().id;
@@ -881,6 +896,10 @@ document.addEventListener('change', (ev) => {
   const i = +c.dataset.coche;
   c.checked ? set.add(i) : set.delete(i);
   c.closest('label').classList.toggle('coche', c.checked);
+});
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && ev.target.matches('[data-champ]')) { ev.preventDefault(); ev.target.blur(); }
 });
 
 document.addEventListener('input', (ev) => {
