@@ -4,7 +4,7 @@
 'use strict';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
-const SCRIPT_URL = '';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsEE9Biy4Qr8ACN5_fiCnqlCLURvxTCUuu3qHHo6X2zCCrcKOjFArArxASQK0k8AkW/exec';
 
 /* ------------------------------------------------------------------ */
 /*  Outils                                                             */
