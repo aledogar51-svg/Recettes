@@ -1,7 +1,7 @@
 // Service worker minimal : l'appli s'ouvre même sans réseau (les recettes
 // déjà chargées sont gardées sur le téléphone par app.js).
 // Réseau d'abord, copie locale en secours : les mises à jour arrivent tout de suite.
-const CACHE = 'recettes-v3';
+const CACHE = 'recettes-v4';
 const FICHIERS = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon-192.png'];
 
 self.addEventListener('install', (e) => {

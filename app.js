@@ -159,13 +159,19 @@ function ajuster(t, ratio) {
   });
 }
 
+const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'en', 'au', 'aux', 'un', 'une', 'pour', 'avec', 'sans', 'petit', 'petite', 'gros', 'grosse', 'bien']);
 function motCle(ing) {
   const s = norm(ing)
     .replace(/^[\d.,\/½¼¾⅓⅔\s-]+/, '')
-    .replace(/^(g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?)\b\.?\s*/, '')
+    .replace(/^(g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
     .replace(/^(de |d'|d’|du |des )/, '');
-  const mots = s.split(/[^a-z]+/).filter((w) => w.length >= 4);
-  return mots[0] ? mots[0].replace(/s$/, '') : '';
+  const mot = s.split(/[^a-z]+/).find((w) => w.length >= 3 && !MOTS_VIDES.has(w));
+  return mot ? mot.replace(/(s|x)$/, '') : '';
+}
+// L'ingrédient est-il cité dans le texte de l'étape ? (mot entier, singulier ou pluriel)
+function citeDans(ing, texteNorm) {
+  const m = motCle(ing);
+  return !!m && new RegExp(`(^|[^a-z])${m}(s|x)?([^a-z]|$)`).test(texteNorm);
 }
 
 function analyserReglages(e, appareil) {
@@ -489,7 +495,7 @@ function vueCuisine(id, n) {
   const base = nbPortions(r);
   const ratio = base ? (S.portions[id] || base) / base : 1;
   const mots = norm(e.t);
-  const utiles = r.ingredients.filter((i) => i.t && motCle(i.t) && mots.includes(motCle(i.t))).map((i) => ajuster(i.t, ratio));
+  const utiles = r.ingredients.filter((i) => i.t && citeDans(i.t, mots)).map((i) => ajuster(i.t, ratio));
   const sec = secondes(g.temps) || (g.temps ? 0 : secondes(e.t));
   const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : '';
   const grille = [['Temps', g.temps], ['Température', g.temp], ['Vitesse', g.vitesse]].filter((x) => x[1]);
