@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.10';
+const APP_VERSION = '1.11';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -509,7 +509,8 @@ function vueRecette(id) {
     </div>
   </div>
   <div class="barre-bas">${bring}
-    <a class="btn-plein" href="#/r/${esc(id)}/cuisine/1">${I.toque}Lancer le mode cuisine</a>
+    <button class="btn-carre" data-act="planifier" data-id="${esc(id)}" aria-label="Planifier cette recette">${I.agenda}</button>
+    <a class="btn-plein" href="#/r/${esc(id)}/cuisine/1">${I.toque}Mode cuisine</a>
   </div>`;
 }
 
