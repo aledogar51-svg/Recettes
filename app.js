@@ -18,13 +18,26 @@ const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0
 const plusJours = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const urlImage = (u) => (/^https?:\/\//i.test(u || '') ? u.replace(/[\s"'()\\]/g, (c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')) : '');
 
-const PASTELS = ['#E9C9A8', '#CFE0C8', '#F2DE9E', '#F2D2C4', '#D9E4C9', '#E8D9B5', '#D6E2EA', '#EAD4E0'];
-function couleur(t) { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PASTELS[h % PASTELS.length]; }
+// Couleur et icône par catégorie (affichées quand la recette n'a pas de photo)
+const STYLE_CAT = {
+  plat: ['#EBCFB0', '#7A4A1C', '<path d="M3 18h18"/><path d="M5 18a7 7 0 0 1 14 0"/><path d="M12 11V8"/><path d="M10 8h4"/>'],
+  entree: ['#CFE0C8', '#245A40', '<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8.5 7.5c0-1.2 1-1.3 1-2.5S8.5 3.8 8.5 3M12 7.5c0-1.2 1-1.3 1-2.5S12 3.8 12 3M15.5 7.5c0-1.2 1-1.3 1-2.5s-1-1.2-1-2"/>'],
+  dessert: ['#F4D5CB', '#8A2E0E', '<path d="M6 12h12l-1.6 8H7.6z"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 5V3"/><path d="M10 16v1M14 16v1"/>'],
+  boisson: ['#D3E3EC', '#24506A', '<path d="M4 4h16l-8 9z"/><path d="M12 13v7M8 20h8"/><path d="m15 7 4-5"/><circle cx="8" cy="6.2" r="1"/>'],
+  apero: ['#F2E1A6', '#6B5008', '<path d="m3 21 11-11"/><circle cx="16" cy="8" r="4"/><circle cx="16.8" cy="7.2" r="1.2"/>'],
+  boulangerie: ['#EADBB8', '#6E4F15', '<path d="M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4 2 2 0 0 1-2 2v6H6v-6a2 2 0 0 1-2-2z"/><path d="M9 10.5l1 2M13 10.5l1 2"/>'],
+  autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>']
+};
+const styleCat = (r) => STYLE_CAT[norm(r.categorie).replace(/[^a-z]/g, '')] || STYLE_CAT.autre;
 function fondImage(r) {
   const u = urlImage(r.photo);
-  return `background-color:${couleur(r.titre)};${u ? `background-image:url("${u}")` : ''}`;
+  return `background-color:${styleCat(r)[0]};${u ? `background-image:url("${u}")` : ''}`;
 }
-const initiale = (r) => (urlImage(r.photo) ? '' : esc((r.titre || '?').trim().charAt(0).toUpperCase()));
+function initiale(r, taille = 28) {
+  if (urlImage(r.photo)) return '';
+  const [, fg, d] = styleCat(r);
+  return `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="${fg}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+}
 
 const I = {
   retour: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
@@ -417,7 +430,7 @@ function vueAccueil() {
   ${prochains.length && !S.choix ? `<section class="section">
     <div class="section-titre"><h2>Au programme</h2><a class="lien" href="#/planning">Planning</a></div>
     <div class="prog">${prochains.map((p) => { const r = recette(p.recetteId) || { titre: p.titre, photo: '' }; return `
-      <a class="carte-prog" href="#/r/${esc(p.recetteId)}"><span class="img" style="${fondImage(r)}">${initiale(r)}</span>
+      <a class="carte-prog" href="#/r/${esc(p.recetteId)}"><span class="img" style="${fondImage(r)}">${initiale(r, 42)}</span>
       <span class="txt"><span class="quand">${esc(libQuand(p))}</span><b>${esc(p.titre)}</b></span></a>`; }).join('')}</div>
   </section>` : ''}
   <section class="section">
@@ -463,7 +476,7 @@ function vueRecette(id) {
     : `<button class="btn-carre" data-act="partager" data-id="${esc(id)}" aria-label="Partager la liste d’ingrédients (vers Bring!)">${I.panier}</button>`;
   const infos = [['Préparation', r.prepa], ['Cuisson', r.cuisson], ['Repos', r.repos], ['Total', r.total]].filter((x) => x[1]).slice(0, 3);
   return `
-  <div class="hero" style="${fondImage(r)}">${initiale(r)}
+  <div class="hero" style="${fondImage(r)}">${initiale(r, 84)}
     <a class="btn-rond g" href="#/" aria-label="Retour">${I.retour}</a>
     <button class="btn-rond d" data-act="fav" data-id="${esc(id)}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${fav}">${fav ? I.coeurPlein : I.coeurVide}</button>
   </div>
