@@ -14,6 +14,8 @@ const FEUILLE_PLANNING = 'Planning';
 const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
+// Version du script (affichée dans les Réglages de l'appli)
+const VERSION = '1.1 · 13/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -147,7 +149,7 @@ function doGet(e) {
 function actionRecettes_(r, forcer) {
   const dossier = DriveApp.getFolderById(r['Dossier recettes (ID)']);
   const recettes = synchroniserIndex_(dossier, forcer);
-  return { ok: true, recettes: recettes, dossierUrl: dossier.getUrl() };
+  return { ok: true, recettes: recettes, dossierUrl: dossier.getUrl(), version: VERSION };
 }
 
 /** Relit uniquement les Docs modifiés depuis la dernière fois. */

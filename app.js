@@ -3,6 +3,10 @@
  */
 'use strict';
 
+// Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
+const APP_VERSION = '1.8';
+const APP_DATE = '13/11/2026';
+
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsEE9Biy4Qr8ACN5_fiCnqlCLURvxTCUuu3qHHo6X2zCCrcKOjFArArxASQK0k8AkW/exec';
 
@@ -81,6 +85,7 @@ const S = {
   recettes: lire('cache-recettes', []),
   planning: lire('cache-planning', []),
   dossierUrl: lire('dossier', ''),
+  versionScript: lire('version-script', ''),
   favoris: new Set(lire('favoris', [])),
   filtre: { q: '', cat: 'Tout', app: 'Tous' },
   portions: {},      // id → nombre de personnes choisi
@@ -130,6 +135,8 @@ async function charger(forcer) {
     // On n'affiche que les Docs qui ressemblent à une recette (ingrédients ou étapes)
     S.recettes = (j.recettes || []).filter((r) => (r.ingredients || []).some((i) => i.t) || (r.etapes || []).some((e) => e.t));
     S.dossierUrl = j.dossierUrl || '';
+    S.versionScript = j.version || 'ancienne';
+    ecrire('version-script', S.versionScript);
     ecrire('cache-recettes', S.recettes);
     ecrire('dossier', S.dossierUrl);
   } catch (e) {
@@ -607,6 +614,14 @@ function vueReglages() {
     <button class="action" data-act="forcer">${I.synchro}Tout relire depuis Drive</button>
     <button class="action" data-act="deconnexion">Changer de code</button>
     <p class="texte" style="font-size:13px">${S.recettes.length} recette${S.recettes.length > 1 ? 's' : ''} enregistrée${S.recettes.length > 1 ? 's' : ''} sur ce téléphone.</p>
+  </section>
+  <section class="section">
+    <div class="section-titre"><h2>Version</h2></div>
+    <div class="info" style="gap:6px">
+      <span>Appli</span><b>${APP_VERSION} · ${APP_DATE}</b>
+      <span>Script Google (partie privée)</span><b>${esc(S.versionScript || '—')}${S.versionScript === 'ancienne' ? ' : à mettre à jour' : ''}</b>
+    </div>
+    <button class="action" data-act="maj">${I.synchro}Forcer la mise à jour</button>
   </section>`;
 }
 
@@ -732,6 +747,15 @@ document.addEventListener('click', async (ev) => {
       } catch (e) { if (fen) fen.close(); toast(e.message); }
       b.disabled = false; break;
     }
+    case 'maj':
+      toast('Mise à jour…');
+      try {
+        const regs = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+        await Promise.all(regs.map((r) => r.unregister()));
+        if (window.caches) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+      } catch (e) { /* on recharge quand même */ }
+      location.reload();
+      break;
     case 'deconnexion': S.code = ''; ecrire('code', ''); location.hash = '#/'; rendre(); break;
   }
 });
