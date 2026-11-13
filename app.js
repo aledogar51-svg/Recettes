@@ -107,7 +107,8 @@ async function charger(forcer) {
   S.chargement = true; S.erreur = ''; majBoutonSynchro();
   try {
     const [j] = await Promise.all([api('recettes', forcer ? { forcer: 1 } : {}), chargerPlanning(true).catch(() => {})]);
-    S.recettes = j.recettes || [];
+    // On n'affiche que les Docs qui ressemblent à une recette (ingrédients ou étapes)
+    S.recettes = (j.recettes || []).filter((r) => (r.ingredients || []).some((i) => i.t) || (r.etapes || []).some((e) => e.t));
     S.dossierUrl = j.dossierUrl || '';
     ecrire('cache-recettes', S.recettes);
     ecrire('dossier', S.dossierUrl);
@@ -699,7 +700,7 @@ document.addEventListener('click', async (ev) => {
       try {
         const j = await api('nouvelle', { titre: 'Nouvelle recette' });
         if (fen) fen.location = j.url; else location.href = j.url;
-        toast('Recette créée : remplis le Doc, puis actualise l’appli');
+        toast('Recette créée : remplis le Doc, puis actualise l’appli (elle apparaît dès qu’elle a un ingrédient)');
       } catch (e) { if (fen) fen.close(); toast(e.message); }
       b.disabled = false; break;
     }
