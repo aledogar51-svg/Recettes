@@ -29,14 +29,13 @@ const STYLE_CAT = {
   autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>']
 };
 const styleCat = (r) => STYLE_CAT[norm(r.categorie).replace(/[^a-z]/g, '')] || STYLE_CAT.autre;
-function fondImage(r) {
-  const u = urlImage(r.photo);
-  return `background-color:${styleCat(r)[0]};${u ? `background-image:url("${u}")` : ''}`;
-}
+function fondImage(r) { return `background-color:${styleCat(r)[0]}`; }
+// Icône de catégorie toujours dessinée ; la photo (si elle se charge) vient par-dessus
 function initiale(r, taille = 28) {
-  if (urlImage(r.photo)) return '';
   const [, fg, d] = styleCat(r);
-  return `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="${fg}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const u = urlImage(r.photo);
+  return `<svg width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="${fg}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>` +
+    (u ? `<img class="photo" src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '');
 }
 
 const I = {
