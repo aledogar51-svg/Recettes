@@ -79,6 +79,7 @@ Préparation : 30 min
 Cuisson : 45 min
 Source : https://…          (lien d'origine, active le bouton Bring!)
 Photo : https://…           (lien direct vers une image, facultatif)
+Poids portion : 982 g       (facultatif ; sinon estimé à partir des ingrédients)
 Calories : 889 kcal         (par portion, facultatif)
 Lipides : 37 g              (facultatif, comme Glucides et Protéines)
 

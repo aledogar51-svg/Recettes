@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.14';
+const APP_VERSION = '1.15';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -89,6 +89,7 @@ const S = {
   dossierUrl: lire('dossier', ''),
   versionScript: lire('version-script', ''),
   theme: lire('theme', 'auto'),
+  maPortion: lire('ma-portion', {}),   // id → grammes (ou nombre de portions si poids inconnu), par téléphone
   favoris: new Set(lire('favoris', [])),
   filtre: { q: '', cat: 'Tout', app: 'Tous' },
   portions: {},      // id → nombre de personnes choisi
@@ -468,6 +469,45 @@ function vueFavoris() {
   <section class="section">${liste.length ? liste.map(ligneRecette).join('') : '<p class="vide">Touche le cœur d’une recette pour la retrouver ici.</p>'}</section>`;
 }
 
+/* ---------- Valeurs nutritionnelles et « ma portion » ---------- */
+const nombre = (s) => { const m = String(s || '').match(/\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(',', '.')) : 0; };
+const fmt = (v, dec) => (dec && v < 10 ? (Math.round(v * 10) / 10).toString().replace('.', ',') : String(Math.round(v)));
+const UNITES_G = { g: 1, gr: 1, gramme: 1, grammes: 1, kg: 1000, mg: 0.001, ml: 1, cl: 10, dl: 100, l: 1000 };
+
+/** Poids d'une portion : donné par la recette (« Poids portion : 982 g »), sinon estimé à partir des ingrédients en g / ml. */
+function poidsPortion(r) {
+  if (nombre(r.poids)) return { g: nombre(r.poids), estime: false };
+  const parts = nbPortions(r) || 1;
+  let total = 0;
+  r.ingredients.forEach((i) => {
+    const m = norm(i.t || '').match(/^(\d+(?:[.,]\d+)?)\s*(kg|mg|ml|cl|dl|grammes?|gr|g|l)\b/);
+    if (m) total += parseFloat(m[1].replace(',', '.')) * UNITES_G[m[2]];
+  });
+  return total >= 50 ? { g: Math.round(total / parts / 10) * 10, estime: true } : null;
+}
+
+function htmlNutrition(r) {
+  if (!r.calories && !r.lipides && !r.glucides && !r.proteines) return '';
+  const p = poidsPortion(r);
+  const perso = S.maPortion[r.id];
+  // facteur = ma portion / portion de la recette
+  const facteur = p ? (perso || p.g) / p.g : (perso || 1);
+  const libPortion = p
+    ? `${fmt(perso || p.g)} g`
+    : `${formatNombre(facteur)} portion${facteur > 1 ? 's' : ''}`;
+  const standard = !perso || (p ? perso === p.g : perso === 1);
+  const kcal = nombre(r.calories);
+  return `<div class="nutri">
+    ${kcal ? `<div class="kcal"><b>${fmt(kcal * facteur)} kcal</b><span>pour ${standard ? '1 portion' : 'ma portion'}</span></div>` : ''}
+    ${[['Lipides', r.lipides], ['Glucides', r.glucides], ['Protéines', r.proteines]].filter((x) => x[1]).map(([k, v]) => `<div class="macro"><span>${k}</span><b>${fmt(nombre(v) * facteur, true)} g</b></div>`).join('')}
+    <div class="ma-portion">
+      <div><span class="lbl-p">Ma portion</span><small>${p ? `1 portion = ${p.estime ? '≈ ' : ''}${fmt(p.g)} g${kcal ? ` · ${fmt(kcal / p.g * 100)} kcal / 100 g` : ''}` : 'poids de la portion inconnu'}</small></div>
+      <div class="stepper"><button data-act="ma-portion" data-d="-1" aria-label="Diminuer ma portion">−</button><output style="width:auto;min-width:64px">${libPortion}</output><button data-act="ma-portion" data-d="1" aria-label="Augmenter ma portion">+</button></div>
+    </div>
+    ${standard ? '' : '<button class="lien" data-act="ma-portion" data-d="0" style="grid-column:1/-1;text-align:left;padding:0">Revenir à 1 portion</button>'}
+  </div>`;
+}
+
 function vueRecette(id) {
   const r = recette(id);
   if (!r) return `<div class="entete"><a class="btn-rond" href="#/" aria-label="Retour">${I.retour}</a><p class="vide">${S.chargement ? 'Chargement…' : 'Recette introuvable.'}</p></div>`;
@@ -507,10 +547,7 @@ function vueRecette(id) {
       <h1 class="titre-recette">${esc(r.titre)}</h1>
     </div>
     ${infos.length ? `<div class="infos">${infos.map(([k, v]) => `<div class="info"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
-    ${r.calories || r.lipides || r.glucides || r.proteines ? `<div class="nutri">
-      ${r.calories ? `<div class="kcal"><b>${esc(r.calories)}</b><span>par portion</span></div>` : ''}
-      ${[['Lipides', r.lipides], ['Glucides', r.glucides], ['Protéines', r.proteines]].filter((x) => x[1]).map(([k, v]) => `<div class="macro"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
-    </div>` : ''}
+    ${htmlNutrition(r)}
     ${base ? `<div class="portions"><b>Pour ${n} personne${n > 1 ? 's' : ''}</b>
       <div class="stepper"><button data-act="portions" data-d="-1" aria-label="Moins de personnes">−</button><output>${n}</output><button data-act="portions" data-d="1" aria-label="Plus de personnes">+</button></div></div>` : ''}
     <div class="segments" role="tablist">
@@ -775,6 +812,13 @@ document.addEventListener('click', async (ev) => {
     case 'forcer': toast('Relecture de toutes les recettes…'); charger(true); break;
     case 'rafraichir-planning':
       try { await chargerPlanning(false); toast('Planning à jour'); } catch (e) { toast(e.message); } break;
+    case 'ma-portion': {
+      const r = recette(route().id); const p = poidsPortion(r); const d = +b.dataset.d;
+      if (!d) delete S.maPortion[r.id];
+      else if (p) S.maPortion[r.id] = Math.max(50, Math.min(3000, (S.maPortion[r.id] || p.g) + d * (p.g >= 400 ? 50 : 25)));
+      else S.maPortion[r.id] = Math.max(0.25, Math.min(5, (S.maPortion[r.id] || 1) + d * 0.25));
+      ecrire('ma-portion', S.maPortion); rendre(); break;
+    }
     case 'portions': {
       const r = recette(route().id); const base = nbPortions(r);
       S.portions[r.id] = Math.max(1, Math.min(30, (S.portions[r.id] || base) + +b.dataset.d)); rendre(); break;

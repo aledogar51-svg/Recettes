@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.2 · 13/11/2026';
+const VERSION = '1.3 · 13/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -206,6 +206,7 @@ const CLES_ENTETE = {
   'temps': 'total', 'temps total': 'total', 'total': 'total',
   'source': 'source', 'lien': 'source', 'url': 'source',
   'photo': 'photo', 'image': 'photo',
+  'poids portion': 'poids', 'poids': 'poids', 'poids par portion': 'poids',
   'calories': 'calories', 'kcal': 'calories', 'energie': 'calories',
   'lipides': 'lipides', 'matieres grasses': 'lipides',
   'glucides': 'glucides',
@@ -219,7 +220,7 @@ function lireDoc_(fichier) {
   const rec = {
     id: fichier.getId(), titre: fichier.getName(), categorie: '', appareil: '',
     portions: '', prepa: '', cuisson: '', repos: '', total: '', source: '', photo: '',
-    calories: '', lipides: '', glucides: '', proteines: '',
+    calories: '', lipides: '', glucides: '', proteines: '', poids: '',
     ingredients: [], etapes: [], notes: '', maj: fichier.getLastUpdated().getTime()
   };
   let section = 'entete';
@@ -292,7 +293,7 @@ function creerDoc_(dossier, rec) {
     ['Titre', rec.titre], ['Catégorie', rec.categorie], ['Appareil', rec.appareil],
     ['Portions', rec.portions], ['Préparation', rec.prepa], ['Cuisson', rec.cuisson],
     ['Source', rec.source], ['Photo', rec.photo],
-    ['Calories', rec.calories || undefined], ['Lipides', rec.lipides || undefined],
+    ['Poids portion', rec.poids || undefined], ['Calories', rec.calories || undefined], ['Lipides', rec.lipides || undefined],
     ['Glucides', rec.glucides || undefined], ['Protéines', rec.proteines || undefined]
   ];
   let premier = true;
@@ -435,7 +436,7 @@ function extraireRecette_(html, url) {
     ingredients: ingredients,
     etapes: etapes.map(function (e) { return e.section ? e : { t: e.t, reglages: e.reglages || [] }; }),
     notes: astuces.join('\n'),
-    calories: nutri.calories, lipides: nutri.lipides, glucides: nutri.glucides, proteines: nutri.proteines
+    poids: nutri.poids, calories: nutri.calories, lipides: nutri.lipides, glucides: nutri.glucides, proteines: nutri.proteines
   };
 }
 
@@ -452,7 +453,11 @@ function nutrition_(recette, html) {
     const m = html.match(re);
     return m ? nettoyer_(m[1]) : '';
   };
+  // Poids d'une portion : « Calories par portion (982 g) » sur Cookomix, ou servingSize
+  const mp = html.match(/Calories par portion\s*(?:<[^>]+>\s*)*\(\s*(\d+(?:[.,]\d+)?)\s*g\s*\)/i);
+  const ss = String(n.servingSize || '').match(/(\d+(?:[.,]\d+)?)\s*g\b/i);
   return {
+    poids: mp ? mp[1] + ' g' : ss ? ss[1] + ' g' : '',
     calories: val(n.calories || depuisHtml('Calories par portion'), 'kcal'),
     lipides: val(n.fatContent || depuisHtml('Lipides'), 'g'),
     glucides: val(n.carbohydrateContent || depuisHtml('Glucides'), 'g'),
