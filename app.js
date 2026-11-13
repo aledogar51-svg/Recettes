@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.13';
+const APP_VERSION = '1.14';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -386,7 +386,7 @@ function filtrees() {
 }
 
 function metaRecette(r) {
-  const parts = [r.categorie, r.appareil, r.total || [r.prepa, r.cuisson].filter(Boolean).join(' + ')].filter(Boolean);
+  const parts = [r.categorie, r.appareil, r.total || [r.prepa, r.cuisson].filter(Boolean).join(' + '), r.calories].filter(Boolean);
   return parts.join(' · ');
 }
 
@@ -507,6 +507,10 @@ function vueRecette(id) {
       <h1 class="titre-recette">${esc(r.titre)}</h1>
     </div>
     ${infos.length ? `<div class="infos">${infos.map(([k, v]) => `<div class="info"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>` : ''}
+    ${r.calories || r.lipides || r.glucides || r.proteines ? `<div class="nutri">
+      ${r.calories ? `<div class="kcal"><b>${esc(r.calories)}</b><span>par portion</span></div>` : ''}
+      ${[['Lipides', r.lipides], ['Glucides', r.glucides], ['Protéines', r.proteines]].filter((x) => x[1]).map(([k, v]) => `<div class="macro"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+    </div>` : ''}
     ${base ? `<div class="portions"><b>Pour ${n} personne${n > 1 ? 's' : ''}</b>
       <div class="stepper"><button data-act="portions" data-d="-1" aria-label="Moins de personnes">−</button><output>${n}</output><button data-act="portions" data-d="1" aria-label="Plus de personnes">+</button></div></div>` : ''}
     <div class="segments" role="tablist">

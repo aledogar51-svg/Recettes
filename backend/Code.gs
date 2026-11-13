@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.1 · 13/11/2026';
+const VERSION = '1.2 · 13/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -205,7 +205,11 @@ const CLES_ENTETE = {
   'repos': 'repos',
   'temps': 'total', 'temps total': 'total', 'total': 'total',
   'source': 'source', 'lien': 'source', 'url': 'source',
-  'photo': 'photo', 'image': 'photo'
+  'photo': 'photo', 'image': 'photo',
+  'calories': 'calories', 'kcal': 'calories', 'energie': 'calories',
+  'lipides': 'lipides', 'matieres grasses': 'lipides',
+  'glucides': 'glucides',
+  'proteines': 'proteines'
 };
 
 /** Transforme un Google Doc (modèle de recette) en objet. */
@@ -215,6 +219,7 @@ function lireDoc_(fichier) {
   const rec = {
     id: fichier.getId(), titre: fichier.getName(), categorie: '', appareil: '',
     portions: '', prepa: '', cuisson: '', repos: '', total: '', source: '', photo: '',
+    calories: '', lipides: '', glucides: '', proteines: '',
     ingredients: [], etapes: [], notes: '', maj: fichier.getLastUpdated().getTime()
   };
   let section = 'entete';
@@ -286,7 +291,9 @@ function creerDoc_(dossier, rec) {
   const entete = [
     ['Titre', rec.titre], ['Catégorie', rec.categorie], ['Appareil', rec.appareil],
     ['Portions', rec.portions], ['Préparation', rec.prepa], ['Cuisson', rec.cuisson],
-    ['Source', rec.source], ['Photo', rec.photo]
+    ['Source', rec.source], ['Photo', rec.photo],
+    ['Calories', rec.calories || undefined], ['Lipides', rec.lipides || undefined],
+    ['Glucides', rec.glucides || undefined], ['Protéines', rec.proteines || undefined]
   ];
   let premier = true;
   entete.forEach(function (l) {
@@ -394,6 +401,7 @@ function extraireRecette_(html, url) {
 
   // Les étapes de la page (avec les icônes Thermomix : cuillère, sens inverse…) sont
   // plus complètes que celles du JSON-LD quand elles existent (Cookomix notamment).
+  const nutri = nutrition_(recette, html);
   let etapes = etapesDepuisHtml_(html);
   if (!etapes.length) aplatirInstructions_(recette.recipeInstructions, etapes);
   const astuces = [];
@@ -426,7 +434,29 @@ function extraireRecette_(html, url) {
     photo: image ? String(image) : '',
     ingredients: ingredients,
     etapes: etapes.map(function (e) { return e.section ? e : { t: e.t, reglages: e.reglages || [] }; }),
-    notes: astuces.join('\n')
+    notes: astuces.join('\n'),
+    calories: nutri.calories, lipides: nutri.lipides, glucides: nutri.glucides, proteines: nutri.proteines
+  };
+}
+
+/** Valeurs nutritionnelles par portion : JSON-LD (schema.org) puis tableau de la page (Cookomix). */
+function nutrition_(recette, html) {
+  const n = recette.nutrition || {};
+  const val = function (v, unite) {
+    const s = nettoyer_(Array.isArray(v) ? v[0] : v);
+    const m = s.match(/\d+(?:[.,]\d+)?/);
+    return m ? m[0].replace('.', ',') + ' ' + unite : '';
+  };
+  const depuisHtml = function (libelle) {
+    const re = new RegExp('<dt[^>]*>\\s*' + libelle + '[\\s\\S]{0,80}?<\\/dt>\\s*<dd[^>]*>([\\s\\S]*?)<\\/dd>', 'i');
+    const m = html.match(re);
+    return m ? nettoyer_(m[1]) : '';
+  };
+  return {
+    calories: val(n.calories || depuisHtml('Calories par portion'), 'kcal'),
+    lipides: val(n.fatContent || depuisHtml('Lipides'), 'g'),
+    glucides: val(n.carbohydrateContent || depuisHtml('Glucides'), 'g'),
+    proteines: val(n.proteinContent || depuisHtml('Prot[ée]ines'), 'g')
   };
 }
 

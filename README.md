@@ -79,6 +79,8 @@ Préparation : 30 min
 Cuisson : 45 min
 Source : https://…          (lien d'origine, active le bouton Bring!)
 Photo : https://…           (lien direct vers une image, facultatif)
+Calories : 889 kcal         (par portion, facultatif)
+Lipides : 37 g              (facultatif, comme Glucides et Protéines)
 
 INGRÉDIENTS
 Bolognaise :
