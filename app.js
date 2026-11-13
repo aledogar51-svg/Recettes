@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.16';
+const APP_VERSION = '1.17';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -375,6 +375,7 @@ function vueCode() {
 }
 
 const CATEGORIES = ['Plat', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Boulangerie'];
+const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Boulangerie: 'Boulangerie' };
 const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Classique'];
 
 function filtrees() {
@@ -405,7 +406,15 @@ function ligneRecette(r) {
 function htmlListe(liste) {
   if (!S.recettes.length) return `<p class="vide">${S.chargement ? 'Chargement des recettes…' : 'Aucune recette pour l’instant. Ajoute la première avec le bouton +.'}</p>`;
   if (!liste.length) return '<p class="vide">Aucune recette ne correspond.</p>';
-  return liste.map(ligneRecette).join('');
+  if (S.filtre.cat !== 'Tout') return liste.map(ligneRecette).join('');
+  // « Tout » : les recettes rangées par catégorie (Plats, Entrées, Desserts…)
+  const cats = [...CATEGORIES, ...[...new Set(liste.map((r) => r.categorie))].filter((c) => !CATEGORIES.includes(c))];
+  return cats.map((c) => {
+    const l = liste.filter((r) => r.categorie === c);
+    if (!l.length) return '';
+    return `<h3 class="groupe"><span class="vignette mini" style="${fondImage({ categorie: c })}">${initiale({ categorie: c }, 16)}</span>${esc(PLURIELS[c] || c)}<small>${l.length}</small></h3>` +
+      l.map(ligneRecette).join('');
+  }).join('');
 }
 
 function libJour(isoDate, court) {
