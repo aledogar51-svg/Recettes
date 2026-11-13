@@ -231,3 +231,4 @@ body.cuisine { background: var(--nuit); }
 img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hero .btn-rond { z-index: 1; }
 .vignette, .carte-prog .img, .hero { color: var(--c2); }
+.btn-rond.theme-actif { background: var(--vert-btn); border-color: var(--vert-btn); color: #fff; }
