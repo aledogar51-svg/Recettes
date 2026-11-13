@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.9';
+const APP_VERSION = '1.10';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -408,6 +408,7 @@ function libQuand(p) {
 
 function bandeauChoix() {
   if (!S.choix) return '';
+  if (S.choix.remplace) return `<div class="bandeau"><span>Choisis la recette qui remplace <b>${esc(S.choix.remplace.titre)}</b></span><button data-act="annuler-choix">Annuler</button></div>`;
   return `<div class="bandeau"><span>Choisis une recette pour <b>${esc(libJour(S.choix.date).toLowerCase())} ${esc(S.choix.moment.toLowerCase())}</b></span><button data-act="annuler-choix">Annuler</button></div>`;
 }
 
@@ -567,6 +568,7 @@ function vuePlanning() {
     const items = S.planning.filter((p) => p.date === j && p.moment === m);
     return `<div class="creneau"><span class="moment">${m}</span>${items.length ? items.map((p) => `
           <a class="plat" href="#/r/${esc(p.recetteId)}">${esc(p.titre)}${p.par ? `<small>par ${esc(p.par)}</small>` : ''}</a>
+          <button class="suppr" data-act="editer" data-id="${esc(p.id)}" aria-label="Modifier ${esc(p.titre)}">${I.crayon.replace('width="24" height="24"', 'width="18" height="18"')}</button>
           <button class="suppr" data-act="retirer" data-id="${esc(p.id)}" aria-label="Retirer ${esc(p.titre)} du planning">${I.fermer}</button>`).join('</div><div class="creneau"><span class="moment"></span>')
       : `<button class="ajout" data-act="creneau" data-date="${j}" data-moment="${m}">+ Choisir une recette</button>`}</div>`;
   }).join('')}
@@ -652,6 +654,35 @@ function feuillePlanifier(id) {
     </form>`);
 }
 
+function feuilleEditer(id) {
+  const p = S.planning.find((x) => x.id === id);
+  if (!p) return;
+  const seg = (m) => `<label style="display:contents"><input class="sr" type="radio" name="moment" value="${m}" ${p.moment === m ? 'checked' : ''}><button type="button" class="${p.moment === m ? 'actif' : ''}" data-act="moment" data-v="${m}">${m}</button></label>`;
+  ouvrirFeuille(`<h2>Modifier « ${esc(p.titre)} »</h2>
+    <form id="form-editer" data-id="${esc(id)}" style="display:flex;flex-direction:column;gap:16px">
+      <div class="champ"><label for="e-date">Jour</label><input id="e-date" name="date" type="date" value="${esc(p.date)}" required></div>
+      <div class="champ"><span class="lbl">Moment</span><div class="segments" role="radiogroup">${seg('Midi')}${seg('Soir')}</div></div>
+      <button type="button" class="action" data-act="changer-recette" data-id="${esc(id)}">${I.livre.replace('width="24" height="24"', 'width="20" height="20"')}Changer de recette</button>
+      <div style="display:flex;gap:10px"><button type="button" class="action" style="flex:1" data-act="fermer">Annuler</button>
+      <button type="submit" class="btn-plein" style="flex:2">Enregistrer</button></div>
+    </form>`);
+}
+
+/** Modifie un repas planifié : on crée le nouveau puis on retire l'ancien (le planning et l'agenda suivent). */
+async function remplacer(p, nouveau) {
+  const r = recette(nouveau.recetteId) || { titre: p.titre };
+  try {
+    await api('planifier', {
+      recetteId: nouveau.recetteId, titre: r.titre, date: nouveau.date, moment: nouveau.moment,
+      par: p.par || S.prenom || '', app: location.origin + location.pathname
+    });
+    await api('retirer', { id: p.id });
+    toast('Repas modifié');
+    await chargerPlanning(true);
+  } catch (e) { toast('Modification impossible : ' + e.message); }
+  rendre();
+}
+
 async function planifier(id, date, moment) {
   const r = recette(id);
   try {
@@ -691,7 +722,12 @@ document.addEventListener('click', async (ev) => {
   const lienRec = ev.target.closest('a[data-rid]');
   if (lienRec && S.choix) {
     ev.preventDefault();
-    const { date, moment } = S.choix; S.choix = null;
+    const { date, moment, remplace } = S.choix; S.choix = null;
+    if (remplace) {
+      location.hash = '#/planning';
+      await remplacer(remplace, { recetteId: lienRec.dataset.rid, date: remplace.date, moment: remplace.moment });
+      return;
+    }
     if (!S.prenom) { location.hash = '#/reglages'; toast('Indique d’abord ton prénom'); return; }
     location.hash = '#/planning';
     await planifier(lienRec.dataset.rid, date, moment);
@@ -729,6 +765,13 @@ document.addEventListener('click', async (ev) => {
       b.disabled = true;
       try { await api('retirer', { id }); S.planning = S.planning.filter((p) => p.id !== id); ecrire('cache-planning', S.planning); toast('Retiré du planning'); } catch (e) { toast(e.message); }
       rendre(); break;
+    case 'editer': feuilleEditer(id); break;
+    case 'changer-recette': {
+      const p = S.planning.find((x) => x.id === id);
+      fermerFeuille();
+      if (p) { S.choix = { remplace: p }; location.hash = '#/'; rendre(); window.scrollTo(0, 0); }
+      break;
+    }
     case 'creneau':
       S.choix = { date: b.dataset.date, moment: b.dataset.moment }; location.hash = '#/'; rendre(); window.scrollTo(0, 0); break;
     case 'annuler-choix': S.choix = null; rendre(); break;
@@ -785,6 +828,11 @@ document.addEventListener('submit', async (ev) => {
     S.code = f.code.value.trim(); ecrire('code', S.code); rendre(); charger(false);
   } else if (f.id === 'form-prenom') {
     S.prenom = f.prenom.value.trim(); ecrire('prenom', S.prenom); toast('Enregistré'); location.hash = '#/';
+  } else if (f.id === 'form-editer') {
+    const p = S.planning.find((x) => x.id === f.dataset.id);
+    const date = f.date.value, moment = f.moment.value;
+    fermerFeuille();
+    if (p && (date !== p.date || moment !== p.moment)) await remplacer(p, { recetteId: p.recetteId, date, moment });
   } else if (f.id === 'form-planifier') {
     if (f.prenom) { S.prenom = f.prenom.value.trim(); ecrire('prenom', S.prenom); }
     const id = f.dataset.id, date = f.date.value, moment = f.moment.value;
