@@ -4,8 +4,8 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.25';
-const APP_DATE = '13/11/2026';
+const APP_VERSION = '1.26';
+const APP_DATE = '14/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsEE9Biy4Qr8ACN5_fiCnqlCLURvxTCUuu3qHHo6X2zCCrcKOjFArArxASQK0k8AkW/exec';
@@ -210,7 +210,7 @@ function ajuster(t, ratio) {
   });
 }
 
-const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'en', 'au', 'aux', 'un', 'une', 'pour', 'avec', 'sans', 'petit', 'petite', 'gros', 'grosse', 'bien']);
+const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'en', 'au', 'aux', 'un', 'une', 'pour', 'avec', 'sans', 'petit', 'petite', 'gros', 'grosse', 'grand', 'grande', 'bien', 'quelque', 'demi', 'beau', 'belle', 'moyen', 'moyenne']);
 // Nom de l'ingrédient sans la quantité ni l'unité : « 500 g d'eau de coco » → « eau de coco »
 function sansQuantite(ing) {
   return norm(ing)
@@ -220,7 +220,7 @@ function sansQuantite(ing) {
 }
 function motCle(ing) {
   const s = sansQuantite(ing);
-  const mot = s.split(/[^a-z]+/).find((w) => w.length >= 3 && !MOTS_VIDES.has(w));
+  const mot = s.split(/[^a-z]+/).find((w) => w.length >= 3 && !MOTS_VIDES.has(w.replace(/(s|x)$/, '')));
   return mot ? mot.replace(/(s|x)$/, '') : '';
 }
 // L'ingrédient est-il cité dans le texte de l'étape ? (mot entier, singulier ou pluriel)
@@ -504,47 +504,120 @@ function vueAccueil() {
 /* ---------- « Mon placard » : quelles recettes avec ce que j'ai ? ---------- */
 // Toujours considérés comme disponibles
 const BASIQUES = new Set(['eau', 'sel', 'poivre', 'glacon']);
-const racine = (m) => norm(m).trim().replace(/\s+/g, ' ').replace(/(s|x)$/, '');
+const singulier = (w) => (w.length > 3 ? w.replace(/(s|x)$/, '') : w);
 
-// Nom lisible d'un ingrédient (avec ses accents), à partir de son mot-clé
-function nomLisible(t, cle) {
-  const mot = String(t).split(/[^A-Za-zÀ-ÿœŒæ]+/).find((w) => racine(w) === cle);
-  return (mot || cle).toLowerCase();
+// Ingrédients à garder en entier : [début du nom (sans accents), clé, nom affiché]
+const COMPOSES = [
+  [/^pommes? de terre/, 'pomme de terre', 'pommes de terre'],
+  [/^petits? pois/, 'petits pois', 'petits pois'],
+  [/^patates? douces?/, 'patate douce', 'patates douces'],
+  [/^eau de (noix de )?coco/, 'eau de coco', 'eau de coco'],
+  [/^eau de fleur/, 'eau de fleur d\'oranger', 'eau de fleur d’oranger'],
+  [/^fleur de sel/, 'sel', 'sel'],
+  [/^noix de coco/, 'noix de coco', 'noix de coco'],
+  [/^lait de coco/, 'lait de coco', 'lait de coco'],
+  [/^creme de coco/, 'creme de coco', 'crème de coco'],
+  [/^noix de cajou/, 'noix de cajou', 'noix de cajou'],
+  [/^noix de pecan/, 'noix de pecan', 'noix de pécan'],
+  [/^citrons? verts?/, 'citron vert', 'citron vert'],
+  [/^pois mange/, 'pois mange-tout', 'pois mange-tout'],
+  [/^pois chiches?/, 'pois chiche', 'pois chiches'],
+  [/^tomates? confites?/, 'tomate confite', 'tomates confites'],
+  [/^tomates? sechees?/, 'tomate sechee', 'tomates séchées'],
+  [/^tomates? cerises?/, 'tomate cerise', 'tomates cerises'],
+  [/^lait de soja/, 'lait de soja', 'lait de soja'],
+  [/^lait de riz/, 'lait de riz', 'lait de riz'],
+  [/^lait d.amande/, 'lait d\'amande', 'lait d’amande'],
+  [/^jus de raisin/, 'jus de raisin', 'jus de raisin'],
+  [/^jus d.orange/, 'jus d\'orange', 'jus d’orange'],
+  [/^jus de pomme/, 'jus de pomme', 'jus de pomme'],
+  [/^raisins? secs?/, 'raisin sec', 'raisins secs'],
+  [/^chocolat blanc/, 'chocolat blanc', 'chocolat blanc'],
+  [/^mousse de foie/, 'mousse de foie', 'mousse de foie'],
+  [/^oignons? nouveaux?/, 'oignon nouveau', 'oignons nouveaux'],
+  [/^haricots? verts?/, 'haricot vert', 'haricots verts'],
+  [/^graines? de tournesol/, 'graines de tournesol', 'graines de tournesol'],
+  [/^noix de muscade/, 'muscade', 'muscade'],
+  [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
+  [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
+  [/^(bouquets? )?garnis?\b/, 'bouquet garni', 'bouquet garni'],
+  [/^herbes de provence/, 'herbes de provence', 'herbes de Provence'],
+  [/^ras.el.?hanout/, 'ras el hanout', 'ras el hanout'],
+  [/^agar/, 'agar-agar', 'agar-agar'],
+  [/^sauce soja/, 'sauce soja', 'sauce soja'],
+  [/^sauce aigre/, 'sauce aigre-douce', 'sauce aigre-douce'],
+  [/^sirop d.erable/, 'sirop d\'erable', 'sirop d’érable'],
+  [/^sirop d.agave/, 'sirop d\'agave', 'sirop d’agave'],
+  [/^gomme de guar/, 'gomme de guar', 'gomme de guar'],
+  [/^chair a saucisse/, 'chair a saucisse', 'chair à saucisse'],
+  [/^pain de mie/, 'pain de mie', 'pain de mie'],
+  [/^pates? feuilletee/, 'pate feuilletee', 'pâte feuilletée'],
+  [/^pates? brisee/, 'pate brisee', 'pâte brisée'],
+  [/^pates? sablee/, 'pate sablee', 'pâte sablée'],
+  [/^pates? sucree/, 'pate sucree', 'pâte sucrée'],
+  [/^pates? a pizza/, 'pate a pizza', 'pâte à pizza'],
+  [/^concentre de tomate/, 'concentre de tomate', 'concentré de tomate'],
+  [/^arome d.amande/, 'arome d\'amande', 'arôme d’amande amère'],
+  [/^sucre glace/, 'sucre glace', 'sucre glace'],
+  [/^sucre vanill/, 'sucre vanille', 'sucre vanillé'],
+  [/^vinaigre balsamique/, 'vinaigre balsamique', 'vinaigre balsamique'],
+  [/^fromage frais/, 'fromage frais', 'fromage frais'],
+  [/^fromage a tartiner/, 'fromage frais', 'fromage frais'],
+  [/^levure de boulanger|^levure boulangere/, 'levure de boulanger', 'levure de boulanger'],
+];
+// Adjectifs placés devant le nom : « petits », « gros », « quelques »…
+const ADJECTIFS = /^(vieux|vieille?s?|petite?s?|gros|grosses?|grande?s?|beaux|belles?|bel|beau|quelques|demi|moyens?|moyennes?|bonnes?|bons?|jolie?s?|1\/2|½)\s+/;
+// Morceaux ou formes d'un ingrédient : « jus de citron » → citron, « jaunes d'œufs » → œuf
+const FORMES = /^(cubes?|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
+const ARTICLES = /^(de |d'|du |des |la |le |les |l'|un |une )/;
+
+// Clé (pour comparer) et nom lisible d'un ingrédient
+function nomIngredient(t) {
+  let s = sansQuantite(t).replace(/’/g, "'").split(/[,(:;]| ou | pour /)[0].trim();
+  for (let i = 0; i < 8; i++) {
+    const c = COMPOSES.find(([re]) => re.test(s));
+    if (c) return { cle: c[1], nom: c[2] };
+    const s2 = s.replace(ADJECTIFS, '').replace(FORMES, '').replace(ARTICLES, '').trim();
+    if (s2 === s) break;
+    s = s2;
+  }
+  const mot = s.split(/[^a-z]+/).find((w) => w.length >= 3 && !MOTS_VIDES.has(singulier(w)));
+  if (!mot) return { cle: '', nom: '' };
+  const cle = singulier(mot);
+  const brut = String(t).split(/[^A-Za-zÀ-ÿœŒæ]+/).find((w) => singulier(norm(w)) === cle);
+  return { cle, nom: (brut || mot).toLowerCase() };
 }
+const cleDe = (t) => nomIngredient(t).cle;
 
-// Mots-clés des ingrédients de toutes les recettes, du plus fréquent au moins fréquent
+// Ingrédients de toutes les recettes, du plus fréquent au moins fréquent
 function ingredientsConnus() {
   const compte = new Map();
   S.recettes.forEach((r) => {
     const vus = new Set();
     r.ingredients.forEach((i) => {
       if (!i.t) return;
-      const k = racine(motCle(i.t));
-      if (!k || estBasique(i.t) || vus.has(k)) return;
-      vus.add(k);
-      const e = compte.get(k) || { cle: k, nom: nomLisible(i.t, k), n: 0 };
-      e.n++; compte.set(k, e);
+      const { cle, nom } = nomIngredient(i.t);
+      if (!cle || BASIQUES.has(cle) || vus.has(cle)) return;
+      vus.add(cle);
+      const e = compte.get(cle) || { cle, nom, n: 0 };
+      e.n++; compte.set(cle, e);
     });
   });
   return [...compte.values()].sort((a, b) => b.n - a.n || a.nom.localeCompare(b.nom, 'fr'));
 }
 
 // Vrai seulement pour l'eau, le sel, le poivre ou les glaçons eux-mêmes (pas « eau de coco »)
-const estBasique = (t) => /^(eau|sel|gros sel|fleur de sel|poivre|glacons?)( (froide|chaude|tiede|fin|moulu|blanc|noir|blanc moulu|noir moulu|du moulin))*\b[^a-z]*(,.*|a ajuster.*|\(.*)?$/.test(sansQuantite(t));
+const estBasique = (t) => BASIQUES.has(cleDe(t));
 
 function dansPlacard(texteIng) {
-  if (estBasique(texteIng)) return true;
-  const t = norm(texteIng);
-  return S.placard.some((p) => {
-    const r = racine(p);
-    return r && new RegExp(`(^|[^a-z])${r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(s|x|e|es)?([^a-z]|$)`).test(t);
-  });
+  const k = cleDe(texteIng);
+  return BASIQUES.has(k) || (!!k && S.placard.some((p) => cleDe(p) === k));
 }
 
 function recettesPossibles() {
   return S.recettes.map((r) => {
     const ings = r.ingredients.filter((i) => i.t);
-    const manque = ings.filter((i) => !dansPlacard(i.t)).map((i) => nomLisible(i.t, racine(motCle(i.t))) || i.t);
+    const manque = ings.filter((i) => !dansPlacard(i.t)).map((i) => nomIngredient(i.t).nom || i.t);
     // Ingrédients trouvés grâce à MON placard (le sel, le poivre et l'eau ne comptent pas)
     const ok = ings.filter((i) => !estBasique(i.t) && dansPlacard(i.t)).length;
     return { r, manque, ok, total: ings.length };
@@ -552,14 +625,26 @@ function recettesPossibles() {
     .sort((a, b) => a.manque.length - b.manque.length || b.ok - a.ok);
 }
 
+// Anciennes versions : retire les mots qui n'étaient pas de vrais ingrédients (« petit », « jaune », « cube »…)
+const ANCIENS_MOTS = new Set(['petit', 'petite', 'grosse', 'jaune', 'blanc', 'cube', 'branche', 'graine', 'jus', 'chair', 'do', 'dos', 'cerneau', 'clou', 'cuisse', 'garni', 'goutte', 'pousse', 'quelque', 'aile', 'dose', 'extrait', 'feuille', 'filet', 'flocon', 'pave', 'petale', 'pointe', 'pulpe', 'ra', 'reste', 'vieux', 'zeste', 'concentre', 'arome']);
+let placardNettoye = false;
+function nettoyerPlacard() {
+  if (placardNettoye) return;
+  placardNettoye = true;
+  const avant = S.placard.length;
+  S.placard = S.placard.filter((p) => cleDe(p) && !ANCIENS_MOTS.has(norm(p).trim()));
+  if (S.placard.length !== avant) ecrire('placard', S.placard);
+}
+
 function vuePlacard() {
+  nettoyerPlacard();
   const connus = ingredientsConnus();
   const frequents = connus.slice(0, 40);
-  const mien = new Set(S.placard.map(racine));
+  const mien = new Set(S.placard.map(cleDe));
   const possibles = S.placard.length ? recettesPossibles() : [];
   const complets = possibles.filter((x) => !x.manque.length);
   const presque = possibles.filter((x) => x.manque.length && x.manque.length <= 2);
-  const nomDe = (p) => (connus.find((c) => c.cle === racine(p)) || { nom: p }).nom;
+  const nomDe = (p) => (connus.find((c) => c.cle === cleDe(p)) || nomIngredient(p)).nom || p;
   return `<div class="entete"><div><div class="sur-titre">Qu'est-ce que je peux faire avec ce que j'ai ?</div><h1 class="grand-titre">Mon placard</h1></div>
     <form id="form-placard" class="recherche" style="padding-right:6px">
       <input id="ing" list="ing-liste" placeholder="Ajouter un ingrédient…" autocomplete="off" aria-label="Ajouter un ingrédient">
@@ -588,14 +673,14 @@ function vuePlacard() {
 }
 
 function placardAjouter(nom) {
-  const k = racine(nom);
-  if (!k || S.placard.some((p) => racine(p) === k)) return;
+  const k = cleDe(nom);
+  if (!k || S.placard.some((p) => cleDe(p) === k)) return;
   S.placard.push(nom.trim().toLowerCase());
   ecrire('placard', S.placard);
 }
 function placardRetirer(nom) {
-  const k = racine(nom);
-  S.placard = S.placard.filter((p) => racine(p) !== k);
+  const k = cleDe(nom);
+  S.placard = S.placard.filter((p) => cleDe(p) !== k);
   ecrire('placard', S.placard);
 }
 
@@ -955,8 +1040,8 @@ document.addEventListener('click', async (ev) => {
       break;
     }
     case 'placard-coche': {
-      const k = racine(b.dataset.v);
-      S.placard.some((p) => racine(p) === k) ? placardRetirer(b.dataset.v) : placardAjouter(b.dataset.v);
+      const k = cleDe(b.dataset.v);
+      S.placard.some((p) => cleDe(p) === k) ? placardRetirer(b.dataset.v) : placardAjouter(b.dataset.v);
       const y = window.scrollY; rendre(); window.scrollTo(0, y); break;
     }
     case 'placard-retirer': { const y = window.scrollY; placardRetirer(b.dataset.v); rendre(); window.scrollTo(0, y); break; }
