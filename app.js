@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.18';
+const APP_VERSION = '1.19';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -189,6 +189,12 @@ function formatNombre(v) {
 
 function ajuster(t, ratio) {
   if (ratio === 1) return t;
+  // Fourchette « 10-12 feuilles » : on ajuste les deux nombres
+  const plage = t.match(/^(\d+(?:[.,]\d+)?)\s*(-|à)\s*(\d+(?:[.,]\d+)?)/);
+  if (plage) {
+    const f = (x) => formatNombre(parseFloat(x.replace(',', '.')) * ratio);
+    return f(plage[1]) + (plage[2] === '-' ? '-' : ' à ') + f(plage[3]) + t.slice(plage[0].length);
+  }
   return t.replace(/^(\d+\s+\d\/\d|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔])/, (m) => {
     let v;
     if (FRACTIONS[m] !== undefined) v = FRACTIONS[m];
