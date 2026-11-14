@@ -73,7 +73,7 @@ Le titre du Doc devient le titre de la recette. Le haut du Doc contient des lign
 ```
 Titre : Lasagnes maison
 Catégorie : Plat            (Plat, Entrée, Dessert, Boisson, Apéro, Boulangerie…)
-Appareil : Thermomix        (Thermomix, Cookeo, Classique, ou « Thermomix + four »)
+Appareil : Thermomix        (Thermomix, Cookeo, Air fryer, Classique, ou « Thermomix + four »)
 Portions : 6
 Préparation : 30 min
 Cuisson : 45 min

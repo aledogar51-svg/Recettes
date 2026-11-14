@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.3 · 13/11/2026';
+const VERSION = '1.4 · 14/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -423,6 +423,7 @@ function extraireRecette_(html, url) {
   let appareil = 'Classique';
   if (/cookomix|thermomix|cookidoo|recettes-thermomix/i.test(url) || /vitesse\s*\d|varoma|sens inverse/.test(tout)) appareil = 'Thermomix';
   else if (/cookeo/i.test(url) || /cookeo|cuisson sous pression|mode dorer/.test(tout)) appareil = 'Cookeo';
+  else if (/air-?fryer|airfryer|friteuse-sans-huile|cosori|ninja/i.test(url) || /air ?fryer|friteuse sans huile|panier de l.air/.test(tout)) appareil = 'Air fryer';
 
   return {
     titre: (texte(recette.name) || 'Recette importée').replace(/\s+(au|avec le|avec la|version)\s+(thermomix|tm\d+|cookeo|companion)\s*$/i, ''),

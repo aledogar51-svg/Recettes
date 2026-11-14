@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.17';
+const APP_VERSION = '1.18';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -226,7 +226,7 @@ function analyserReglages(e, appareil) {
       else if (!res.temps && /^\d+([.,]\d+)?\s*(h|min|mn|sec|s)\b/.test(l)) res.temps = s;
       else res.extra.push(s);
     });
-  } else if (/thermomix|cookeo/.test(app)) {
+  } else if (/thermomix|cookeo|air ?fryer|friteuse/.test(app)) {
     const t = e.t;
     const mT = t.match(/\d+(?:[.,]\d+)?\s*(?:min|mn|sec|s|h)\b(?:\s*\d+\s*(?:sec|s|min)\b)?/i);
     const mC = t.match(/\d{2,3}\s*°\s*C?|varoma/i);
@@ -376,14 +376,16 @@ function vueCode() {
 
 const CATEGORIES = ['Plat', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Boulangerie'];
 const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Boulangerie: 'Boulangerie' };
-const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Classique'];
+const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Air fryer', 'Classique'];
+// « Air fryer », « Airfryer », « friteuse sans huile »… comptent pour le même appareil
+const estAppareil = (r, a) => { const x = norm(r.appareil).replace(/\s+/g, ''); const y = norm(a).replace(/\s+/g, ''); return x.includes(y) || (y === 'airfryer' && x.includes('friteuse')); };
 
 function filtrees() {
   const { q, cat, app } = S.filtre;
   const nq = norm(q).trim();
   return S.recettes.filter((r) =>
     (cat === 'Tout' || r.categorie === cat) &&
-    (app === 'Tous' || norm(r.appareil).includes(norm(app))) &&
+    (app === 'Tous' || estAppareil(r, app)) &&
     (!nq || norm(r.titre).includes(nq) || r.ingredients.some((i) => i.t && norm(i.t).includes(nq))));
 }
 
@@ -590,7 +592,7 @@ function vueCuisine(id, n) {
   const mots = norm(e.t);
   const utiles = r.ingredients.filter((i) => i.t && citeDans(i.t, mots)).map((i) => ajuster(i.t, ratio));
   const sec = secondes(g.temps) || (g.temps ? 0 : secondes(e.t));
-  const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : '';
+  const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : estAppareil(r, 'Air fryer') ? 'Air fryer' : '';
   const grille = [['Temps', g.temps], ['Temp.', g.temp], ['Sens', g.inverse && 'inverse'], ['Vitesse', g.vitesse]].filter((x) => x[1])
     .map(([k, v]) => [k, picto(v, 34) || esc(v)]);
   return `<div class="cuisine-v" id="cuisine">

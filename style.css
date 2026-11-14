@@ -250,3 +250,4 @@ img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit:
 .groupe:first-child { margin-top: 0; }
 .groupe small { font-size: 13px; font-weight: 500; color: var(--doux); }
 .vignette.mini { width: 28px; height: 28px; border-radius: 8px; }
+.entete .segments button { font-size: 13px; padding: 0 2px; white-space: nowrap; }
