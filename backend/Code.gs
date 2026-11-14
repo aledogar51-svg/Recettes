@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.5 · 14/11/2026';
+const VERSION = '1.6 · 15/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -426,11 +426,12 @@ function extraireRecette_(html, url) {
   let appareil = 'Classique';
   if (/cookomix|thermomix|cookidoo|recettes-thermomix/i.test(url) || /vitesse\s*\d|varoma|sens inverse/.test(tout)) appareil = 'Thermomix';
   else if (/cookeo/i.test(url) || /cookeo|cuisson sous pression|mode dorer/.test(tout)) appareil = 'Cookeo';
+  else if (/weber|barbecue|bbq/i.test(url) || /\bweber\b|barbecue|\bbbq\b|plancha|braises|cuisson indirecte/.test(tout)) appareil = 'Weber';
   else if (/air-?fryer|airfryer|friteuse-sans-huile|cosori|ninja/i.test(url) || /air ?fryer|friteuse sans huile|panier de l.air/.test(tout)) appareil = 'Air fryer';
 
   return {
     titre: (texte(recette.name) || 'Recette importée').replace(/\s+(au|avec le|avec la|version)\s+(thermomix|tm\d+|cookeo|companion)\s*$/i, ''),
-    categorie: categorie_(recette.recipeCategory, recette.name),
+    categorie: (function (c) { return appareil === 'Weber' && c === 'Plat' ? 'Barbecue' : c; })(categorie_(recette.recipeCategory, recette.name)),
     appareil: appareil,
     portions: mp ? mp[0] : '',
     prepa: duree_(recette.prepTime),
@@ -577,6 +578,7 @@ function categorie_(cat, nom) {
   if (/apero|aperitif|amuse|tapas|dip/.test(s)) return 'Apéro';
   if (/entree|soupe|veloute|salade/.test(s)) return 'Entrée';
   if (/pain|brioche|viennoiserie/.test(s)) return 'Boulangerie';
+  if (/barbecue|bbq|grillade|plancha/.test(s)) return 'Barbecue';
   return 'Plat';
 }
 

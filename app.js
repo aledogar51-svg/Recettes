@@ -4,8 +4,8 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.26';
-const APP_DATE = '14/11/2026';
+const APP_VERSION = '1.27';
+const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsEE9Biy4Qr8ACN5_fiCnqlCLURvxTCUuu3qHHo6X2zCCrcKOjFArArxASQK0k8AkW/exec';
@@ -31,6 +31,7 @@ const STYLE_CAT = {
   apero: ['#F2E1A6', '#6B5008', '<path d="m3 21 11-11"/><circle cx="16" cy="8" r="4"/><circle cx="16.8" cy="7.2" r="1.2"/>', '#3A3214', '#EBCB6E'],
   sauce: ['#E6D9C8', '#6B4A2A', '<path d="M5 10h14l-1.5 9a2 2 0 0 1-2 1.7h-7A2 2 0 0 1 6.5 19z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9 14h6"/>', '#3A2E22', '#E0BE96'],
   boulangerie: ['#EADBB8', '#6E4F15', '<path d="M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4 2 2 0 0 1-2 2v6H6v-6a2 2 0 0 1-2-2z"/><path d="M9 10.5l1 2M13 10.5l1 2"/>', '#38301E', '#E3C78E'],
+  barbecue: ['#EDCAC2', '#8E2B20', '<path d="M3 10h18"/><path d="M4.5 10a7.5 6 0 0 0 15 0"/><path d="M8 15.2 6 21M16 15.2l2 5.8M12 16v5"/><path d="M10 7c0-1.2 1-1.3 1-2.5S10 3.3 10 2.5M14 7c0-1.2 1-1.3 1-2.5s-1-1.2-1-2"/>', '#3E201C', '#EE9C8E'],
   autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>', '#22382D', '#8FD0AE']
 };
 const styleCat = (r) => STYLE_CAT[norm(r.categorie).replace(/[^a-z]/g, '')] || STYLE_CAT.autre;
@@ -390,11 +391,11 @@ function vueCode() {
     </form></div>`;
 }
 
-const CATEGORIES = ['Plat', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Sauce', 'Boulangerie'];
-const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Sauce: 'Sauces', Boulangerie: 'Boulangerie' };
-const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Air fryer', 'Classique'];
-// « Air fryer », « Airfryer », « friteuse sans huile »… comptent pour le même appareil
-const estAppareil = (r, a) => { const x = norm(r.appareil).replace(/\s+/g, ''); const y = norm(a).replace(/\s+/g, ''); return x.includes(y) || (y === 'airfryer' && x.includes('friteuse')); };
+const CATEGORIES = ['Plat', 'Barbecue', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Sauce', 'Boulangerie'];
+const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Sauce: 'Sauces', Boulangerie: 'Boulangerie', Barbecue: 'Barbecue' };
+const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Air fryer', 'Weber', 'Classique'];
+// « Air fryer », « Airfryer », « friteuse sans huile »… comptent pour le même appareil (pareil pour Weber / barbecue)
+const estAppareil = (r, a) => { const x = norm(r.appareil).replace(/\s+/g, ''); const y = norm(a).replace(/\s+/g, ''); return x.includes(y) || (y === 'airfryer' && x.includes('friteuse')) || (y === 'weber' && /barbecue|bbq/.test(x)); };
 
 function filtrees() {
   const { q, cat, app } = S.filtre;
@@ -803,7 +804,7 @@ function vueCuisine(id, n) {
   const mots = norm(e.t);
   const utiles = r.ingredients.filter((i) => i.t && citeDans(i.t, mots)).map((i) => ajuster(i.t, ratio));
   const sec = secondes(g.temps) || (g.temps ? 0 : secondes(e.t));
-  const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : estAppareil(r, 'Air fryer') ? 'Air fryer' : '';
+  const nomApp = g.horsRobot ? '' : /thermomix/i.test(r.appareil) ? 'Thermomix' : /cookeo/i.test(r.appareil) ? 'Cookeo' : estAppareil(r, 'Air fryer') ? 'Air fryer' : estAppareil(r, 'Weber') ? 'Weber' : '';
   const grille = [['Temps', g.temps], ['Temp.', g.temp], ['Sens', g.inverse && 'inverse'], ['Vitesse', g.vitesse]].filter((x) => x[1])
     .map(([k, v]) => [k, picto(v, 34) || esc(v)]);
   return `<div class="cuisine-v" id="cuisine">
