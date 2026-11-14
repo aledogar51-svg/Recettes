@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.4 · 14/11/2026';
+const VERSION = '1.5 · 14/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -381,6 +381,9 @@ function actionImporter_(r, p) {
   const html = rep.getContentText();
   const rec = extraireRecette_(html, url);
   if (!rec) return { ok: false, erreur: "Pas de recette lisible sur cette page. Envoie le lien ou une capture à Claude." };
+  if (!rec.etapes.some(function (e) { return e.t; })) {
+    return { ok: false, erreur: "Cette page ne donne pas les étapes (Cookidoo les réserve aux abonnés connectés). Envoie la photo de la recette à Claude." };
+  }
 
   const f = creerDoc_(dossier, rec);
   const lue = lireDoc_(f);
