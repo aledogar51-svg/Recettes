@@ -254,7 +254,8 @@ img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit:
 .groupe-bloc.ouvert .chevron { transform: rotate(180deg); }
 .groupe-bloc .vignette.mini { width: 40px; height: 40px; border-radius: 12px; }
 /* Ascenseur par catégorie : la liste défile dans son bloc */
-.groupe-liste { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; border-top: 1px solid var(--ligne2); padding-top: 8px; }
+.groupe-liste { max-height: calc(100vh - var(--nav-h) - var(--bas) - 110px); max-height: calc(100dvh - var(--nav-h) - var(--bas) - 110px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; border-top: 1px solid var(--ligne2); padding-top: 8px; }
 .groupe-liste .ligne-recette { background: var(--fond); }
 .vignette.mini { width: 28px; height: 28px; border-radius: 8px; }
 .entete .segments button { font-size: 13px; padding: 0 2px; white-space: nowrap; }
+#liste { padding-bottom: 40vh; }

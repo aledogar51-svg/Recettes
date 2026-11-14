@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.22';
+const APP_VERSION = '1.23';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -841,6 +841,11 @@ document.addEventListener('click', async (ev) => {
       S.ouverts.has(c) ? S.ouverts.delete(c) : S.ouverts.add(c);
       ecrire('ouverts', [...S.ouverts]);
       const l = filtrees(); $('#liste').innerHTML = htmlListe(l);
+      // On remonte la catégorie ouverte en haut de l'écran pour voir toute sa liste
+      if (S.ouverts.has(c)) {
+        const bloc = [...document.querySelectorAll('.groupe-bloc')].find((x) => x.querySelector(`[data-v="${CSS.escape(c)}"]`));
+        if (bloc) { const y = bloc.getBoundingClientRect().top + window.scrollY - 12; window.scrollTo({ top: y, behavior: 'smooth' }); }
+      }
       break;
     }
     case 'cat': S.filtre.cat = b.dataset.v; rendre(); break;
