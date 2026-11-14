@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.23';
+const APP_VERSION = '1.24';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -17,7 +17,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const lire = (k, d) => { try { const v = localStorage.getItem('rec:' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
 const ecrire = (k, v) => { try { localStorage.setItem('rec:' + k, JSON.stringify(v)); } catch (e) { /* stockage plein */ } };
-const norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae');
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const plusJours = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const urlImage = (u) => (/^https?:\/\//i.test(u || '') ? u.replace(/[\s"'()\\]/g, (c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')) : '');
@@ -68,6 +68,7 @@ const I = {
   inverse: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
   soleilTheme: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   lune: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  placard: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 12h16M12 3v18M9.5 8v1M14.5 8v1M9.5 15v1M14.5 15v1"/></svg>',
   partager: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>'
 };
 
@@ -90,6 +91,7 @@ const S = {
   dossierUrl: lire('dossier', ''),
   versionScript: lire('version-script', ''),
   theme: lire('theme', 'auto'),
+  placard: lire('placard', []),   // ingrédients que j'ai sous la main (mots simplifiés)
   ouverts: new Set(lire('ouverts', [])), // catégories dépliées sur l'accueil
   maPortion: lire('ma-portion', {}),   // id → grammes (ou nombre de portions si poids inconnu), par téléphone
   favoris: new Set(lire('favoris', [])),
@@ -330,7 +332,7 @@ function route() {
   const [chemin] = h.split('?');
   const p = chemin.split('/').filter(Boolean);
   if (p[0] === 'r' && p[1]) return p[2] === 'cuisine' ? { vue: 'cuisine', id: p[1], n: Math.max(0, (+p[3] || 1) - 1) } : { vue: 'recette', id: p[1] };
-  if (['favoris', 'planning', 'ajouter', 'reglages'].includes(p[0])) return { vue: p[0] };
+  if (['favoris', 'placard', 'planning', 'ajouter', 'reglages'].includes(p[0])) return { vue: p[0] };
   return { vue: 'accueil' };
 }
 
@@ -347,6 +349,7 @@ function rendre() {
   else if (r.vue === 'recette') html = vueRecette(r.id);
   else if (r.vue === 'cuisine') html = vueCuisine(r.id, r.n);
   else if (r.vue === 'favoris') html = vueFavoris();
+  else if (r.vue === 'placard') html = vuePlacard();
   else if (r.vue === 'planning') html = vuePlanning();
   else if (r.vue === 'ajouter') html = vueAjouter();
   else if (r.vue === 'reglages') html = vueReglages();
@@ -361,6 +364,7 @@ function rendre() {
 function navHtml(v) {
   const l = (href, id, ico, txt) => `<a href="${href}" class="${v === id ? 'actif' : ''}" ${v === id ? 'aria-current="page"' : ''}>${ico}${txt}</a>`;
   return l('#/', 'accueil', I.livre, 'Recettes') + l('#/favoris', 'favoris', I.coeurNav, 'Favoris') +
+    l('#/placard', 'placard', I.placard, 'Placard') +
     l('#/planning', 'planning', I.agenda, 'Planning') + l('#/ajouter', 'ajouter', I.plus, 'Ajouter');
 }
 
@@ -402,12 +406,12 @@ function metaRecette(r) {
   return parts.join(' · ');
 }
 
-function ligneRecette(r) {
+function ligneRecette(r, extra) {
   const fav = S.favoris.has(r.id);
   return `<div class="ligne-recette">
     <a class="ligne-lien" href="#/r/${esc(r.id)}" data-rid="${esc(r.id)}">
       <span class="vignette" style="${fondImage(r)}">${initiale(r)}</span>
-      <span class="ligne-texte"><b>${esc(r.titre)}</b><span class="meta">${esc(metaRecette(r))}</span></span>
+      <span class="ligne-texte"><b>${esc(r.titre)}</b><span class="meta">${esc(metaRecette(r))}</span>${extra ? `<span class="manque">${extra}</span>` : ''}</span>
     </a>
     <button class="coeur" data-act="fav" data-id="${esc(r.id)}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}" aria-pressed="${fav}">${fav ? I.coeurPlein : I.coeurVide}</button>
   </div>`;
@@ -491,6 +495,101 @@ function vueAccueil() {
     <div id="liste" style="display:flex;flex-direction:column;gap:10px">${htmlListe(filtrees())}</div>
   </section>
 `;
+}
+
+/* ---------- « Mon placard » : quelles recettes avec ce que j'ai ? ---------- */
+// Toujours considérés comme disponibles
+const BASIQUES = new Set(['eau', 'sel', 'poivre', 'glacon']);
+const racine = (m) => norm(m).trim().replace(/\s+/g, ' ').replace(/(s|x)$/, '');
+
+// Nom lisible d'un ingrédient (avec ses accents), à partir de son mot-clé
+function nomLisible(t, cle) {
+  const mot = String(t).split(/[^A-Za-zÀ-ÿœŒæ]+/).find((w) => racine(w) === cle);
+  return (mot || cle).toLowerCase();
+}
+
+// Mots-clés des ingrédients de toutes les recettes, du plus fréquent au moins fréquent
+function ingredientsConnus() {
+  const compte = new Map();
+  S.recettes.forEach((r) => {
+    const vus = new Set();
+    r.ingredients.forEach((i) => {
+      if (!i.t) return;
+      const k = racine(motCle(i.t));
+      if (!k || BASIQUES.has(k) || vus.has(k)) return;
+      vus.add(k);
+      const e = compte.get(k) || { cle: k, nom: nomLisible(i.t, k), n: 0 };
+      e.n++; compte.set(k, e);
+    });
+  });
+  return [...compte.values()].sort((a, b) => b.n - a.n || a.nom.localeCompare(b.nom, 'fr'));
+}
+
+function dansPlacard(texteIng) {
+  const t = norm(texteIng);
+  const k = racine(motCle(texteIng));
+  if (k && BASIQUES.has(k)) return true;
+  return S.placard.some((p) => {
+    const r = racine(p);
+    return r && new RegExp(`(^|[^a-z])${r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(s|x|e|es)?([^a-z]|$)`).test(t);
+  });
+}
+
+function recettesPossibles() {
+  return S.recettes.map((r) => {
+    const ings = r.ingredients.filter((i) => i.t);
+    const manque = ings.filter((i) => !dansPlacard(i.t)).map((i) => nomLisible(i.t, racine(motCle(i.t))) || i.t);
+    const ok = ings.length - manque.length;
+    return { r, manque, ok, total: ings.length };
+  }).filter((x) => x.total && x.ok > 0)
+    .sort((a, b) => a.manque.length - b.manque.length || b.ok - a.ok);
+}
+
+function vuePlacard() {
+  const connus = ingredientsConnus();
+  const frequents = connus.slice(0, 40);
+  const mien = new Set(S.placard.map(racine));
+  const possibles = S.placard.length ? recettesPossibles() : [];
+  const complets = possibles.filter((x) => !x.manque.length);
+  const presque = possibles.filter((x) => x.manque.length && x.manque.length <= 2);
+  const nomDe = (p) => (connus.find((c) => c.cle === racine(p)) || { nom: p }).nom;
+  return `<div class="entete"><div><div class="sur-titre">Qu'est-ce que je peux faire avec ce que j'ai ?</div><h1 class="grand-titre">Mon placard</h1></div>
+    <form id="form-placard" class="recherche" style="padding-right:6px">
+      <input id="ing" list="ing-liste" placeholder="Ajouter un ingrédient…" autocomplete="off" aria-label="Ajouter un ingrédient">
+      <datalist id="ing-liste">${connus.map((c) => `<option value="${esc(c.nom)}">`).join('')}</datalist>
+      <button class="btn-rond" type="submit" aria-label="Ajouter" style="width:40px;height:40px">${I.plus}</button>
+    </form>
+  </div>
+  <section class="section">
+    <div class="section-titre"><h2>Dans mon placard <span class="meta">${S.placard.length || ''}</span></h2>${S.placard.length ? '<button class="lien" data-act="placard-vider">Tout vider</button>' : ''}</div>
+    ${S.placard.length
+    ? `<div class="puces-wrap">${S.placard.map((p) => `<button class="puce actif" data-act="placard-retirer" data-v="${esc(p)}" aria-label="Retirer ${esc(nomDe(p))}">${esc(nomDe(p))} ✕</button>`).join('')}</div>`
+    : '<p class="texte" style="font-size:14px">Coche ci-dessous ce que tu as sous la main, ou ajoute-le avec le champ. Le sel, le poivre et l’eau sont comptés comme toujours disponibles.</p>'}
+  </section>
+  ${S.placard.length ? `<section class="section">
+    <div class="section-titre"><h2>Tu peux cuisiner</h2><span class="meta">${complets.length}</span></div>
+    ${complets.length ? complets.map((x) => ligneRecette(x.r)).join('') : '<p class="texte" style="font-size:14px">Aucune recette complète pour l’instant.</p>'}
+  </section>
+  ${presque.length ? `<section class="section">
+    <div class="section-titre"><h2>Il manque presque rien</h2><span class="meta">${presque.length}</span></div>
+    ${presque.map((x) => ligneRecette(x.r, 'Manque : ' + esc(x.manque.join(', ')))).join('')}
+  </section>` : ''}` : ''}
+  <section class="section">
+    <div class="section-titre"><h2>Ingrédients de tes recettes</h2></div>
+    <div class="puces-wrap">${frequents.map((c) => `<button class="puce${mien.has(c.cle) ? ' actif' : ''}" data-act="placard-coche" data-v="${esc(c.nom)}" aria-pressed="${mien.has(c.cle)}">${esc(c.nom)}</button>`).join('')}</div>
+  </section>`;
+}
+
+function placardAjouter(nom) {
+  const k = racine(nom);
+  if (!k || S.placard.some((p) => racine(p) === k)) return;
+  S.placard.push(nom.trim().toLowerCase());
+  ecrire('placard', S.placard);
+}
+function placardRetirer(nom) {
+  const k = racine(nom);
+  S.placard = S.placard.filter((p) => racine(p) !== k);
+  ecrire('placard', S.placard);
 }
 
 function vueFavoris() {
@@ -848,6 +947,13 @@ document.addEventListener('click', async (ev) => {
       }
       break;
     }
+    case 'placard-coche': {
+      const k = racine(b.dataset.v);
+      S.placard.some((p) => racine(p) === k) ? placardRetirer(b.dataset.v) : placardAjouter(b.dataset.v);
+      const y = window.scrollY; rendre(); window.scrollTo(0, y); break;
+    }
+    case 'placard-retirer': { const y = window.scrollY; placardRetirer(b.dataset.v); rendre(); window.scrollTo(0, y); break; }
+    case 'placard-vider': S.placard = []; ecrire('placard', S.placard); rendre(); break;
     case 'cat': S.filtre.cat = b.dataset.v; rendre(); break;
     case 'app': S.filtre.app = b.dataset.v; rendre(); break;
     case 'rafraichir': charger(false); break;
@@ -958,6 +1064,9 @@ document.addEventListener('submit', async (ev) => {
   const f = ev.target;
   if (f.id === 'form-code') {
     S.code = f.code.value.trim(); ecrire('code', S.code); rendre(); charger(false);
+  } else if (f.id === 'form-placard') {
+    const v = f.ing.value.trim();
+    if (v) { placardAjouter(v); rendre(); const champ = $('#ing'); if (champ) champ.focus(); }
   } else if (f.id === 'form-prenom') {
     S.prenom = f.prenom.value.trim(); ecrire('prenom', S.prenom); toast('Enregistré'); location.hash = '#/';
   } else if (f.id === 'form-editer') {

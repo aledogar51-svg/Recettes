@@ -118,7 +118,7 @@ body.sans-nav #app { padding-bottom: calc(110px + var(--bas)); }
 .fab { position: fixed; right: max(20px, calc(50% - 260px)); bottom: calc(var(--nav-h) + var(--bas) + 18px); width: 60px; height: 60px; border-radius: 20px; background: var(--vert-btn); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(47,107,79,.35); z-index: 5; }
 
 /* ---------- Navigation ---------- */
-.nav { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--nav-h) + var(--bas)); padding-bottom: var(--bas); background: var(--carte); border-top: 1px solid var(--ligne2); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; z-index: 10; }
+.nav { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--nav-h) + var(--bas)); padding-bottom: var(--bas); background: var(--carte); border-top: 1px solid var(--ligne2); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; z-index: 10; }
 .nav a { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--doux); text-decoration: none; font-size: 12px; font-weight: 500; padding: 8px 0; }
 .nav a.actif { color: var(--vert); font-weight: 600; }
 
@@ -259,3 +259,8 @@ img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit:
 .vignette.mini { width: 28px; height: 28px; border-radius: 8px; }
 .entete .segments button { font-size: 13px; padding: 0 2px; white-space: nowrap; }
 #liste { padding-bottom: 40vh; }
+.puces-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.puces-wrap .puce { height: 38px; }
+.ligne-texte .manque { font-size: 13px; color: #9A3412; font-weight: 500; }
+:root[data-theme="dark"] .ligne-texte .manque { color: #F5B9A2; }
+.nav a { font-size: 11px; }
