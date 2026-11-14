@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.24';
+const APP_VERSION = '1.25';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -211,11 +211,15 @@ function ajuster(t, ratio) {
 }
 
 const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'en', 'au', 'aux', 'un', 'une', 'pour', 'avec', 'sans', 'petit', 'petite', 'gros', 'grosse', 'bien']);
-function motCle(ing) {
-  const s = norm(ing)
+// Nom de l'ingrédient sans la quantité ni l'unité : « 500 g d'eau de coco » → « eau de coco »
+function sansQuantite(ing) {
+  return norm(ing)
     .replace(/^[\d.,\/½¼¾⅓⅔\s-]+/, '')
-    .replace(/^(g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
-    .replace(/^(de |d'|d’|du |des )/, '');
+    .replace(/^(c\.?\s*a\s*(soupe|cafe)( rase| bombee)?|g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
+    .replace(/^(de |d'|d’|du |des )/, '').trim();
+}
+function motCle(ing) {
+  const s = sansQuantite(ing);
   const mot = s.split(/[^a-z]+/).find((w) => w.length >= 3 && !MOTS_VIDES.has(w));
   return mot ? mot.replace(/(s|x)$/, '') : '';
 }
@@ -516,7 +520,7 @@ function ingredientsConnus() {
     r.ingredients.forEach((i) => {
       if (!i.t) return;
       const k = racine(motCle(i.t));
-      if (!k || BASIQUES.has(k) || vus.has(k)) return;
+      if (!k || estBasique(i.t) || vus.has(k)) return;
       vus.add(k);
       const e = compte.get(k) || { cle: k, nom: nomLisible(i.t, k), n: 0 };
       e.n++; compte.set(k, e);
@@ -525,10 +529,12 @@ function ingredientsConnus() {
   return [...compte.values()].sort((a, b) => b.n - a.n || a.nom.localeCompare(b.nom, 'fr'));
 }
 
+// Vrai seulement pour l'eau, le sel, le poivre ou les glaçons eux-mêmes (pas « eau de coco »)
+const estBasique = (t) => /^(eau|sel|gros sel|fleur de sel|poivre|glacons?)( (froide|chaude|tiede|fin|moulu|blanc|noir|blanc moulu|noir moulu|du moulin))*\b[^a-z]*(,.*|a ajuster.*|\(.*)?$/.test(sansQuantite(t));
+
 function dansPlacard(texteIng) {
+  if (estBasique(texteIng)) return true;
   const t = norm(texteIng);
-  const k = racine(motCle(texteIng));
-  if (k && BASIQUES.has(k)) return true;
   return S.placard.some((p) => {
     const r = racine(p);
     return r && new RegExp(`(^|[^a-z])${r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(s|x|e|es)?([^a-z]|$)`).test(t);
@@ -539,9 +545,10 @@ function recettesPossibles() {
   return S.recettes.map((r) => {
     const ings = r.ingredients.filter((i) => i.t);
     const manque = ings.filter((i) => !dansPlacard(i.t)).map((i) => nomLisible(i.t, racine(motCle(i.t))) || i.t);
-    const ok = ings.length - manque.length;
+    // Ingrédients trouvés grâce à MON placard (le sel, le poivre et l'eau ne comptent pas)
+    const ok = ings.filter((i) => !estBasique(i.t) && dansPlacard(i.t)).length;
     return { r, manque, ok, total: ings.length };
-  }).filter((x) => x.total && x.ok > 0)
+  }).filter((x) => x.total && x.ok > 0 && x.manque.length <= x.ok)
     .sort((a, b) => a.manque.length - b.manque.length || b.ok - a.ok);
 }
 
