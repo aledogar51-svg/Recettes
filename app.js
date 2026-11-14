@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.20';
+const APP_VERSION = '1.21';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -486,7 +486,7 @@ function vueAccueil() {
     <div class="section-titre"><h2>${S.filtre.cat === 'Tout' ? 'Toutes les recettes' : esc(S.filtre.cat)}</h2><span class="meta" id="compte">${filtrees().length}</span></div>
     <div id="liste" style="display:flex;flex-direction:column;gap:10px">${htmlListe(filtrees())}</div>
   </section>
-  <a class="fab" href="#/ajouter" aria-label="Ajouter une recette">${I.plus}</a>`;
+`;
 }
 
 function vueFavoris() {
