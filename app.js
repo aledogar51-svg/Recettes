@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.21';
+const APP_VERSION = '1.22';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -458,7 +458,11 @@ function vueAccueil() {
   const cats = ['Tout', ...CATEGORIES.filter((c) => S.recettes.some((r) => r.categorie === c)),
     ...[...new Set(S.recettes.map((r) => r.categorie))].filter((c) => c && !CATEGORIES.includes(c))];
   const auj = iso(new Date());
-  const prochains = S.planning.filter((p) => p.date >= auj).slice(0, 8);
+  // Un repas d'aujourd'hui disparaît une fois passé : midi après 14 h 30, soir après 22 h 30
+  const maintenant = new Date();
+  const minutes = maintenant.getHours() * 60 + maintenant.getMinutes();
+  const fini = (p) => p.date === auj && minutes >= (p.moment === 'Midi' ? 14 * 60 + 30 : 22 * 60 + 30);
+  const prochains = S.planning.filter((p) => p.date >= auj && !fini(p)).slice(0, 8);
   return `
   <div class="entete">
     <div class="entete-ligne">
