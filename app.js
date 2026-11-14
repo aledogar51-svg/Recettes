@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.19';
+const APP_VERSION = '1.20';
 const APP_DATE = '13/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -29,6 +29,7 @@ const STYLE_CAT = {
   dessert: ['#F4D5CB', '#8A2E0E', '<path d="M6 12h12l-1.6 8H7.6z"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 5V3"/><path d="M10 16v1M14 16v1"/>', '#3E2620', '#F2A58A'],
   boisson: ['#D3E3EC', '#24506A', '<path d="M4 4h16l-8 9z"/><path d="M12 13v7M8 20h8"/><path d="m15 7 4-5"/><circle cx="8" cy="6.2" r="1"/>', '#1F3240', '#9CC6E0'],
   apero: ['#F2E1A6', '#6B5008', '<path d="m3 21 11-11"/><circle cx="16" cy="8" r="4"/><circle cx="16.8" cy="7.2" r="1.2"/>', '#3A3214', '#EBCB6E'],
+  sauce: ['#E6D9C8', '#6B4A2A', '<path d="M5 10h14l-1.5 9a2 2 0 0 1-2 1.7h-7A2 2 0 0 1 6.5 19z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9 14h6"/>', '#3A2E22', '#E0BE96'],
   boulangerie: ['#EADBB8', '#6E4F15', '<path d="M4 11a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4 2 2 0 0 1-2 2v6H6v-6a2 2 0 0 1-2-2z"/><path d="M9 10.5l1 2M13 10.5l1 2"/>', '#38301E', '#E3C78E'],
   autre: ['#DDE6DF', '#2F6B4F', '<path d="M6 13.9A4 4 0 0 1 7 6a5 5 0 0 1 10 0 4 4 0 0 1 1 7.9V20H6z"/><path d="M6 17h12"/>', '#22382D', '#8FD0AE']
 };
@@ -89,6 +90,7 @@ const S = {
   dossierUrl: lire('dossier', ''),
   versionScript: lire('version-script', ''),
   theme: lire('theme', 'auto'),
+  ouverts: new Set(lire('ouverts', [])), // catégories dépliées sur l'accueil
   maPortion: lire('ma-portion', {}),   // id → grammes (ou nombre de portions si poids inconnu), par téléphone
   favoris: new Set(lire('favoris', [])),
   filtre: { q: '', cat: 'Tout', app: 'Tous' },
@@ -380,8 +382,8 @@ function vueCode() {
     </form></div>`;
 }
 
-const CATEGORIES = ['Plat', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Boulangerie'];
-const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Boulangerie: 'Boulangerie' };
+const CATEGORIES = ['Plat', 'Entrée', 'Dessert', 'Boisson', 'Apéro', 'Sauce', 'Boulangerie'];
+const PLURIELS = { Plat: 'Plats', 'Entrée': 'Entrées', Dessert: 'Desserts', Boisson: 'Boissons', 'Apéro': 'Apéros', Sauce: 'Sauces', Boulangerie: 'Boulangerie' };
 const APPAREILS = ['Tous', 'Thermomix', 'Cookeo', 'Air fryer', 'Classique'];
 // « Air fryer », « Airfryer », « friteuse sans huile »… comptent pour le même appareil
 const estAppareil = (r, a) => { const x = norm(r.appareil).replace(/\s+/g, ''); const y = norm(a).replace(/\s+/g, ''); return x.includes(y) || (y === 'airfryer' && x.includes('friteuse')); };
@@ -420,8 +422,16 @@ function htmlListe(liste) {
   return cats.map((c) => {
     const l = liste.filter((r) => r.categorie === c);
     if (!l.length) return '';
-    return `<h3 class="groupe"><span class="vignette mini" style="${fondImage({ categorie: c })}">${initiale({ categorie: c }, 16)}</span>${esc(PLURIELS[c] || c)}<small>${l.length}</small></h3>` +
-      l.map(ligneRecette).join('');
+    // Pendant une recherche, toutes les catégories trouvées sont ouvertes
+    const ouvert = S.filtre.q.trim() ? true : S.ouverts.has(c);
+    return `<div class="groupe-bloc${ouvert ? ' ouvert' : ''}">
+      <button class="groupe" data-act="groupe" data-v="${esc(c)}" aria-expanded="${ouvert}">
+        <span class="vignette mini" style="${fondImage({ categorie: c })}">${initiale({ categorie: c }, 18)}</span>
+        <span class="groupe-nom">${esc(PLURIELS[c] || c)}</span><small>${l.length}</small>
+        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      ${ouvert ? `<div class="groupe-liste">${l.map(ligneRecette).join('')}</div>` : ''}
+    </div>`;
   }).join('');
 }
 
@@ -822,6 +832,13 @@ document.addEventListener('click', async (ev) => {
     case 'fav':
       S.favoris.has(id) ? S.favoris.delete(id) : S.favoris.add(id);
       ecrire('favoris', [...S.favoris]); rendre(); break;
+    case 'groupe': {
+      const c = b.dataset.v;
+      S.ouverts.has(c) ? S.ouverts.delete(c) : S.ouverts.add(c);
+      ecrire('ouverts', [...S.ouverts]);
+      const l = filtrees(); $('#liste').innerHTML = htmlListe(l);
+      break;
+    }
     case 'cat': S.filtre.cat = b.dataset.v; rendre(); break;
     case 'app': S.filtre.app = b.dataset.v; rendre(); break;
     case 'rafraichir': charger(false); break;

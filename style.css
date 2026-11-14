@@ -246,8 +246,15 @@ img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit:
 .stepper input.val::-webkit-outer-spin-button, .stepper input.val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .stepper input.val:focus { outline: 2px solid var(--vert); outline-offset: 1px; }
 .stepper .unite { font-size: 14px; color: var(--doux); margin-left: -2px; }
-.groupe { display: flex; align-items: center; gap: 10px; font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; margin: 10px 0 0; }
-.groupe:first-child { margin-top: 0; }
-.groupe small { font-size: 13px; font-weight: 500; color: var(--doux); }
+.groupe-bloc { background: var(--carte); border-radius: 18px; overflow: hidden; }
+.groupe { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 14px 10px 10px; border: none; background: none; font-family: Inter, sans-serif; font-size: 17px; font-weight: 600; color: var(--encre); text-align: left; }
+.groupe-nom { flex: 1; }
+.groupe small { font-size: 13px; font-weight: 600; color: var(--doux); background: var(--fond); border-radius: 10px; padding: 3px 9px; }
+.groupe .chevron { color: var(--doux); transition: transform .2s; flex: none; }
+.groupe-bloc.ouvert .chevron { transform: rotate(180deg); }
+.groupe-bloc .vignette.mini { width: 40px; height: 40px; border-radius: 12px; }
+/* Ascenseur par catégorie : la liste défile dans son bloc */
+.groupe-liste { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; padding: 0 8px 8px; border-top: 1px solid var(--ligne2); padding-top: 8px; }
+.groupe-liste .ligne-recette { background: var(--fond); }
 .vignette.mini { width: 28px; height: 28px; border-radius: 8px; }
 .entete .segments button { font-size: 13px; padding: 0 2px; white-space: nowrap; }
