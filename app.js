@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.27';
+const APP_VERSION = '1.28';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -538,6 +538,15 @@ const COMPOSES = [
   [/^oignons? nouveaux?/, 'oignon nouveau', 'oignons nouveaux'],
   [/^haricots? verts?/, 'haricot vert', 'haricots verts'],
   [/^graines? de tournesol/, 'graines de tournesol', 'graines de tournesol'],
+  [/^fruits? de la passion/, 'fruit de la passion', 'fruits de la Passion'],
+  [/^jus de fruits? de la passion/, 'fruit de la passion', 'fruits de la Passion'],
+  [/^creme de (vinaigre )?balsamique/, 'creme de balsamique', 'crème de balsamique'],
+  [/^sot.l.y.laisse/, 'sot-l\'y-laisse', 'sot-l’y-laisse'],
+  [/^poivre (sauvage|de sichuan|de timut|timut|rose|long)/, 'poivre special', 'poivre sauvage'],
+  [/^epices? (a|pour) pain d.epices?/, 'epices pain d\'epices', 'épices à pain d’épices'],
+  [/^pain d.epices?/, 'pain d\'epices', 'pain d’épices'],
+  [/^biscuits? a la cuill?ere/, 'biscuit a la cuillere', 'biscuits à la cuillère'],
+  [/^radis noirs?/, 'radis noir', 'radis noir'],
   [/^noix de muscade/, 'muscade', 'muscade'],
   [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
   [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
@@ -569,7 +578,7 @@ const COMPOSES = [
 // Adjectifs placés devant le nom : « petits », « gros », « quelques »…
 const ADJECTIFS = /^(vieux|vieille?s?|petite?s?|gros|grosses?|grande?s?|beaux|belles?|bel|beau|quelques|demi|moyens?|moyennes?|bonnes?|bons?|jolie?s?|1\/2|½)\s+/;
 // Morceaux ou formes d'un ingrédient : « jus de citron » → citron, « jaunes d'œufs » → œuf
-const FORMES = /^(cubes?|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
+const FORMES = /^(cubes?|pinces?|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
 const ARTICLES = /^(de |d'|du |des |la |le |les |l'|un |une )/;
 
 // Clé (pour comparer) et nom lisible d'un ingrédient
