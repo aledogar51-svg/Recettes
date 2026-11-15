@@ -266,3 +266,9 @@ img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit:
 .ligne-texte .manque { font-size: 13px; color: #9A3412; font-weight: 500; }
 :root[data-theme="dark"] .ligne-texte .manque { color: #F5B9A2; }
 .nav a { font-size: 11px; }
+
+/* Planning : « Une autre date » */
+.autre-date .champ { margin: 8px 0 10px; }
+.autre-moments { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.autre-moments button.ajout { width: 100%; border: 1px dashed var(--ligne); background: none; border-radius: 10px; height: 40px; color: var(--pale); font-size: 14px; }
+.jour.autre-date h3 { text-transform: none; }

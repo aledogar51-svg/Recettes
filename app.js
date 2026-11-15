@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -169,7 +169,7 @@ async function charger(forcer) {
 
 async function chargerPlanning(silencieux) {
   const auj = new Date();
-  const j = await api('planning', { du: iso(plusJours(auj, -1)), au: iso(plusJours(auj, 45)) });
+  const j = await api('planning', { du: iso(plusJours(auj, -1)), au: iso(plusJours(auj, 400)) });
   S.planning = j.planning || [];
   ecrire('cache-planning', S.planning);
   if (!silencieux) rendre();
@@ -890,10 +890,10 @@ function vueCuisine(id, n) {
 function vuePlanning() {
   const auj = new Date();
   const jours = Array.from({ length: 14 }, (_, i) => iso(plusJours(auj, i)));
-  return `<div class="entete"><div class="entete-ligne"><div><div class="sur-titre">Partagé avec ta famille</div><h1 class="grand-titre">Planning</h1></div>
-    <button class="btn-rond" data-act="rafraichir-planning" aria-label="Actualiser le planning">${I.synchro}</button></div></div>
-  ${S.erreur ? `<div class="erreur">${esc(S.erreur)}</div>` : ''}
-  <section class="section">${jours.map((j, i) => `
+  const fin = jours[jours.length - 1];
+  // Jours planifiés au-delà des 14 prochains jours (saisis avec « Une autre date »)
+  const plusLoin = [...new Set(S.planning.map((p) => p.date).filter((d) => d > fin))].sort();
+  const jour = (j, i) => `
     <div class="jour${i === 0 ? ' aujourdhui' : ''}"><h3>${esc(libJour(j))}</h3>
       ${['Midi', 'Soir'].map((m) => {
     const items = S.planning.filter((p) => p.date === j && p.moment === m);
@@ -903,7 +903,21 @@ function vuePlanning() {
           <button class="suppr" data-act="retirer" data-id="${esc(p.id)}" aria-label="Retirer ${esc(p.titre)} du planning">${I.fermer}</button>`).join('</div><div class="creneau"><span class="moment"></span>')
       : `<button class="ajout" data-act="creneau" data-date="${j}" data-moment="${m}">+ Choisir une recette</button>`}</div>`;
   }).join('')}
-    </div>`).join('')}
+    </div>`;
+  return `<div class="entete"><div class="entete-ligne"><div><div class="sur-titre">Partagé avec ta famille</div><h1 class="grand-titre">Planning</h1></div>
+    <button class="btn-rond" data-act="rafraichir-planning" aria-label="Actualiser le planning">${I.synchro}</button></div></div>
+  ${S.erreur ? `<div class="erreur">${esc(S.erreur)}</div>` : ''}
+  <section class="section">${jours.map(jour).join('')}</section>
+  ${plusLoin.length ? `<section class="section"><div class="section-titre"><h2>Plus loin</h2></div>${plusLoin.map((j) => jour(j, -1)).join('')}</section>` : ''}
+  <section class="section">
+    <div class="jour autre-date"><h3>Une autre date</h3>
+      <div class="champ"><label for="autre-date">Jour</label>
+        <input id="autre-date" type="date" min="${iso(auj)}" value="${iso(plusJours(auj, 14))}"></div>
+      <div class="autre-moments">
+        <button class="ajout" data-act="autre-date" data-moment="Midi">+ Midi</button>
+        <button class="ajout" data-act="autre-date" data-moment="Soir">+ Soir</button>
+      </div>
+    </div>
   </section>`;
 }
 
@@ -1137,6 +1151,12 @@ document.addEventListener('click', async (ev) => {
     }
     case 'creneau':
       S.choix = { date: b.dataset.date, moment: b.dataset.moment }; location.hash = '#/'; rendre(); window.scrollTo(0, 0); break;
+    case 'autre-date': {
+      const d = (document.getElementById('autre-date') || {}).value;
+      if (!d) { toast('Choisis d’abord un jour'); break; }
+      if (d < iso(new Date())) { toast('Ce jour est déjà passé'); break; }
+      S.choix = { date: d, moment: b.dataset.moment }; location.hash = '#/'; rendre(); window.scrollTo(0, 0); break;
+    }
     case 'annuler-choix': S.choix = null; rendre(); break;
     case 'etape': location.replace(`#/r/${route().id}/cuisine/${b.dataset.n}`); window.scrollTo(0, 0); break;
     case 'terminer': arreterMinuteur(); location.hash = `#/r/${id}`; break;
