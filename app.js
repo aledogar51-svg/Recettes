@@ -619,13 +619,14 @@ const COMPOSES = [
 // Adjectifs placés devant le nom : « petits », « gros », « quelques »…
 const ADJECTIFS = /^(environ|epaisses?|fines?|vieux|vieille?s?|petite?s?|gros|grosses?|grande?s?|beaux|belles?|bel|beau|quelques|demi|moyens?|moyennes?|bonnes?|bons?|jolie?s?|1\/2|½)\s+/;
 // Morceaux ou formes d'un ingrédient : « jus de citron » → citron, « jaunes d'œufs » → œuf
-const FORMES = /^(supremes?|steaks?|coeurs?|cotes?|cotelettes?|cubes?|pinces?|poudres?|tours? de moulin|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
+const FORMES = /^(purees?|supremes?|steaks?|coeurs?|cotes?|cotelettes?|cubes?|pinces?|poudres?|tours? de moulin|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
 const ARTICLES = /^(de |d'|du |des |la |le |les |l'|un |une )/;
 
 // Clé (pour comparer) et nom lisible d'un ingrédient
 function nomIngredient(t) {
   let s0 = sansQuantite(t);
-  if (/^\+/.test(s0)) s0 = sansQuantite(s0.slice(1)); // « 8 cl + 2 c. à soupe d'huile »
+  if (/^\+/.test(s0)) s0 = sansQuantite(s0.slice(1));
+  if (/^\d/.test(s0)) s0 = sansQuantite(s0); // « 1 boîte de 250 g de … » // « 8 cl + 2 c. à soupe d'huile »
   let s = s0.replace(/’/g, "'").replace(/\([^)]*\)?/g, ' ').split(/[,(:;]| ou | pour /)[0].replace(/\s+/g, ' ').trim();
   for (let i = 0; i < 8; i++) {
     const c = COMPOSES.find(([re]) => re.test(s));
