@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.37';
+const APP_VERSION = '1.38';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -200,7 +200,7 @@ function ajuster(t, ratio) {
     const f = (x) => formatNombre(parseFloat(x.replace(',', '.')) * ratio);
     return f(plage[1]) + (plage[2] === '-' ? '-' : ' à ') + f(plage[3]) + t.slice(plage[0].length);
   }
-  return t.replace(/^(\d+\s+\d\/\d|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔])/, (m) => {
+  return t.replace(/^(\d+\s+\d\/\d|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])/, (m) => {
     let v;
     if (FRACTIONS[m] !== undefined) v = FRACTIONS[m];
     else if (/\d+\s+\d\/\d/.test(m)) { const [e, f] = m.trim().split(/\s+/); const [a, b] = f.split('/'); v = +e + a / b; }
@@ -215,7 +215,7 @@ const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'e
 // Nom de l'ingrédient sans la quantité ni l'unité : « 500 g d'eau de coco » → « eau de coco »
 function sansQuantite(ing) {
   return norm(ing)
-    .replace(/^[\d.,\/½¼¾⅓⅔\s-]+/, '')
+    .replace(/^[\d.,\/½¼¾⅓⅔⅛⅜⅝⅞\s-]+/, '')
     .replace(/^(c\.?\s*a\s*(soupe|cafe)( rases?| bombees?)?|g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
     .replace(/^(de |d'|d’|du |des )/, '').trim();
 }
@@ -573,6 +573,9 @@ const COMPOSES = [
   [/^copeaux de bois/, 'copeaux de bois', 'copeaux de bois'],
   [/^sauce yaourt/, 'sauce yaourt', 'sauce yaourt'],
   [/^pains? pita/, 'pain pita', 'pains pita'],
+  [/^pates? de piment/, 'pate de piment', 'pâte de piment'],
+  [/^sauce barbecue/, 'sauce barbecue', 'sauce barbecue'],
+  [/^garam masala/, 'garam masala', 'garam masala'],
   [/^noix de muscade/, 'muscade', 'muscade'],
   [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
   [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
