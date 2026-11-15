@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.33';
+const APP_VERSION = '1.34';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -562,6 +562,9 @@ const COMPOSES = [
   [/^coeurs? (de |d.)(mini.)?artichauts?/, 'artichaut', 'artichauts'],
   [/^fromages? de chevre|^chevre/, 'chevre', 'chèvre'],
   [/^liqueur d.amande|^amaretto/, 'amaretto', 'amaretto'],
+  [/^pates? de speculoos/, 'pate de speculoos', 'pâte de speculoos'],
+  [/^(biscuits? )?speculoos/, 'speculoos', 'speculoos'],
+  [/^anis vert|^graines? d.anis/, 'anis vert', 'anis vert'],
   [/^noix de muscade/, 'muscade', 'muscade'],
   [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
   [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
