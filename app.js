@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.30';
+const APP_VERSION = '1.31';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -216,7 +216,7 @@ const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'e
 function sansQuantite(ing) {
   return norm(ing)
     .replace(/^[\d.,\/½¼¾⅓⅔\s-]+/, '')
-    .replace(/^(c\.?\s*a\s*(soupe|cafe)( rase| bombee)?|g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
+    .replace(/^(c\.?\s*a\s*(soupe|cafe)( rases?| bombees?)?|g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
     .replace(/^(de |d'|d’|du |des )/, '').trim();
 }
 function motCle(ing) {
@@ -551,6 +551,10 @@ const COMPOSES = [
   [/^lait concentre/, 'lait concentre', 'lait concentré'],
   [/^(melange d.epices|quatre.epices|4 epices)/, 'quatre epices', '4 épices'],
   [/^trompettes?.de.la.mort/, 'trompette de la mort', 'trompettes-de-la-mort'],
+  [/^oeufs? de saumon/, 'oeufs de saumon', 'œufs de saumon'],
+  [/^creme de marrons?/, 'creme de marron', 'crème de marron'],
+  [/^baies? roses?/, 'baies roses', 'baies roses'],
+  [/^anis etoile/, 'anis etoile', 'anis étoilé'],
   [/^noix de muscade/, 'muscade', 'muscade'],
   [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
   [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
