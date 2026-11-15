@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.39';
+const APP_VERSION = '1.40';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -553,6 +553,7 @@ const COMPOSES = [
   [/^radis noirs?/, 'radis noir', 'radis noir'],
   [/^levure nutritionnelle/, 'levure nutritionnelle', 'levure nutritionnelle'],
   [/^lait concentre/, 'lait concentre', 'lait concentré'],
+  [/^melange d.epices (classique )?pour barbecue|^epices (pour )?barbecue/, 'epices barbecue', 'épices barbecue'],
   [/^(melange d.epices|quatre.epices|4.epices)/, 'quatre epices', '4 épices'],
   [/^trompettes?.de.la.mort/, 'trompette de la mort', 'trompettes-de-la-mort'],
   [/^oeufs? de saumon/, 'oeufs de saumon', 'œufs de saumon'],
@@ -611,7 +612,7 @@ const COMPOSES = [
 // Adjectifs placés devant le nom : « petits », « gros », « quelques »…
 const ADJECTIFS = /^(epaisses?|fines?|vieux|vieille?s?|petite?s?|gros|grosses?|grande?s?|beaux|belles?|bel|beau|quelques|demi|moyens?|moyennes?|bonnes?|bons?|jolie?s?|1\/2|½)\s+/;
 // Morceaux ou formes d'un ingrédient : « jus de citron » → citron, « jaunes d'œufs » → œuf
-const FORMES = /^(coeurs?|cotes?|cotelettes?|cubes?|pinces?|poudres?|tours? de moulin|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
+const FORMES = /^(supremes?|steaks?|coeurs?|cotes?|cotelettes?|cubes?|pinces?|poudres?|tours? de moulin|jus|zestes?|branches?|brins?|feuilles?|gouttes?|doses?|filets?|paves?|dos|cuisses?|ailes?|blancs?|jaunes?|cerneaux|chair|pulpe|extraits?|flocons?|petales?|pointes? de couteau|pousses?|restes?|graines?|clous?|morceaux?|tranches?|viande|quartiers?|tiges?|gousses?|grains?|lamelles?|rondelles?|copeaux|tablettes?|carres?|barquettes?|bottes?|poignees?|bocal|bocaux|boules?|pincees?|traits?|rouleaux?|feuilletes?|sticks?|batons?|tetes?|bulbes?|escalopes?)\s+(de |d'|du |des |a |au )/;
 const ARTICLES = /^(de |d'|du |des |la |le |les |l'|un |une )/;
 
 // Clé (pour comparer) et nom lisible d'un ingrédient
