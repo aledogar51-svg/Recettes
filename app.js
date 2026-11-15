@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.1';
+const APP_VERSION = '1.2';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -91,6 +91,7 @@ const S = {
   planning: lire('cache-planning', []),
   dossierUrl: lire('dossier', ''),
   versionScript: lire('version-script', ''),
+  bring: lire('bring', false),   // le script sait servir une page lisible par Bring!
   theme: lire('theme', 'auto'),
   placard: lire('placard', []),   // ingrédients que j'ai sous la main (mots simplifiés)
   ouverts: new Set(lire('ouverts', [])), // catégories dépliées sur l'accueil
@@ -156,6 +157,7 @@ async function charger(forcer) {
     S.dossierUrl = j.dossierUrl || '';
     S.versionScript = j.version || 'ancienne';
     ecrire('version-script', S.versionScript);
+    S.bring = !!j.bring; ecrire('bring', S.bring);
     ecrire('cache-recettes', S.recettes);
     ecrire('dossier', S.dossierUrl);
   } catch (e) {
@@ -807,8 +809,11 @@ function vueRecette(id) {
       .map((c) => (picto(c, 18) ? `<span class="chip chip-ico">${picto(c, 18)}</span>` : `<span class="chip">${esc(c)}</span>`));
     return `<li class="etape"><span class="num">${num}</span><div><p>${esc(e.t)}</p>${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}</div></li>`;
   }).join('');
-  const bring = r.source && /^https?:/.test(r.source)
-    ? `<a class="btn-carre" href="https://api.getbring.com/rest/bringrecipes/deeplink?url=${encodeURIComponent(r.source)}&source=web&baseQuantity=${base || 4}&requestedQuantity=${n || 4}" target="_blank" rel="noopener" aria-label="Envoyer les ingrédients dans Bring!">${I.panier}</a>`
+  // Bring! lit la page d'origine ; sans lien d'origine, il lit la page servie par le script
+  const urlBring = /^https?:/.test(r.source || '') ? r.source
+    : (S.bring && SCRIPT_URL ? SCRIPT_URL + '?action=bring&id=' + encodeURIComponent(id) : '');
+  const bring = urlBring
+    ? `<a class="btn-carre" href="https://api.getbring.com/rest/bringrecipes/deeplink?url=${encodeURIComponent(urlBring)}&source=web&baseQuantity=${base || 4}&requestedQuantity=${n || 4}" target="_blank" rel="noopener" aria-label="Envoyer les ingrédients dans Bring!">${I.panier}</a>`
     : `<button class="btn-carre" data-act="partager" data-id="${esc(id)}" aria-label="Partager la liste d’ingrédients (vers Bring!)">${I.panier}</button>`;
   const infos = [['Préparation', r.prepa], ['Cuisson', r.cuisson], ['Repos', r.repos], ['Total', r.total]].filter((x) => x[1]).slice(0, 3);
   return `

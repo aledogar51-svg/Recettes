@@ -15,7 +15,7 @@ const FEUILLE_INDEX = 'Index';
 const NOM_DOSSIER = 'Recettes';
 const NOM_AGENDA = 'Repas';
 // Version du script (affichée dans les Réglages de l'appli)
-const VERSION = '1.6 · 15/11/2026';
+const VERSION = '1.0 · 15/11/2026';
 const HEURES = { Midi: [12, 0, 13, 0], Soir: [19, 30, 20, 30] };
 
 /* ------------------------------------------------------------------ */
@@ -120,6 +120,9 @@ function ecrireReglages_(r) {
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  // Page lue par Bring! pour importer les ingrédients d'une recette sans lien d'origine.
+  // Pas de code secret (Bring! ne l'a pas) : seul l'identifiant du Doc, impossible à deviner, donne accès.
+  if (p.action === 'bring') return pageBring_(p.id);
   let res;
   try {
     const r = lireReglages_();
@@ -149,7 +152,56 @@ function doGet(e) {
 function actionRecettes_(r, forcer) {
   const dossier = DriveApp.getFolderById(r['Dossier recettes (ID)']);
   const recettes = synchroniserIndex_(dossier, forcer);
-  return { ok: true, recettes: recettes, dossierUrl: dossier.getUrl(), version: VERSION };
+  return { ok: true, recettes: recettes, dossierUrl: dossier.getUrl(), version: VERSION, bring: true };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Page pour Bring! (format schema.org Recipe)                        */
+/* ------------------------------------------------------------------ */
+
+function xml_(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** Cherche la recette dans l'index (seules les recettes du dossier sont servies). */
+function recetteIndex_(id) {
+  if (!id) return null;
+  const sh = SpreadsheetApp.getActive().getSheetByName(FEUILLE_INDEX);
+  const n = sh ? sh.getLastRow() - 1 : 0;
+  if (n <= 0) return null;
+  const lignes = sh.getRange(2, 1, n, 3).getValues();
+  for (let i = 0; i < lignes.length; i++) {
+    if (lignes[i][0] === id) { try { return JSON.parse(lignes[i][2]); } catch (e) { return null; } }
+  }
+  return null;
+}
+
+function pageBring_(id) {
+  const rec = recetteIndex_(String(id || ''));
+  let corps;
+  if (!rec) {
+    corps = '<head><meta charset="utf-8"/><title>Recette introuvable</title></head><body><p>Recette introuvable.</p></body>';
+  } else {
+    const ings = (rec.ingredients || []).filter(function (i) { return i.t; }).map(function (i) { return i.t; });
+    const portions = (String(rec.portions || '').match(/\d+/) || ['4'])[0];
+    const ld = {
+      '@context': 'https://schema.org', '@type': 'Recipe',
+      name: rec.titre, recipeYield: portions, recipeCategory: rec.categorie || '',
+      recipeIngredient: ings
+    };
+    if (/^https?:/.test(rec.photo || '')) ld.image = rec.photo;
+    const json = JSON.stringify(ld).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+    corps = '<head><meta charset="utf-8"/><title>' + xml_(rec.titre) + '</title>' +
+      '<script type="application/ld+json">' + json + '</script></head>' +
+      '<body><div itemscope="itemscope" itemtype="http://schema.org/Recipe">' +
+      '<h1 itemprop="name">' + xml_(rec.titre) + '</h1>' +
+      (ld.image ? '<img itemprop="image" src="' + xml_(ld.image) + '" alt=""/>' : '') +
+      '<p>Pour <span itemprop="recipeYield">' + xml_(portions) + '</span> personnes</p><ul>' +
+      ings.map(function (t) { return '<li itemprop="recipeIngredient ingredients">' + xml_(t) + '</li>'; }).join('') +
+      '</ul></div></body>';
+  }
+  const page = '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">' + corps + '</html>';
+  return ContentService.createTextOutput(page).setMimeType(ContentService.MimeType.XML);
 }
 
 /** Relit uniquement les Docs modifiés depuis la dernière fois. */
