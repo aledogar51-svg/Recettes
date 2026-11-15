@@ -178,7 +178,7 @@ async function chargerPlanning(silencieux) {
 /* ------------------------------------------------------------------ */
 /*  Quantités, réglages, minuteur                                      */
 /* ------------------------------------------------------------------ */
-const FRACTIONS = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3 };
+const FRACTIONS = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3 , '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875};
 
 function nbPortions(r) { const m = String(r.portions || '').match(/\d+/); return m ? +m[0] : 0; }
 
