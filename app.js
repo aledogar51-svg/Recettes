@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.31';
+const APP_VERSION = '1.32';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -542,7 +542,11 @@ const COMPOSES = [
   [/^jus de fruits? de la passion/, 'fruit de la passion', 'fruits de la Passion'],
   [/^creme de (vinaigre )?balsamique/, 'creme de balsamique', 'crème de balsamique'],
   [/^sot.l.y.laisse/, 'sot-l\'y-laisse', 'sot-l’y-laisse'],
-  [/^poivre (sauvage|de sichuan|de timut|timut|rose|long)/, 'poivre special', 'poivre sauvage'],
+  [/^poivre sauvage/, 'poivre sauvage', 'poivre sauvage'],
+  [/^poivre de sichuan/, 'poivre de sichuan', 'poivre de Sichuan'],
+  [/^poivre (de timut|timut)/, 'poivre de timut', 'poivre de Timut'],
+  [/^poivre rose/, 'baies roses', 'baies roses'],
+  [/^poivre long/, 'poivre long', 'poivre long'],
   [/^epices? (a|pour) pain d.epices?/, 'epices pain d\'epices', 'épices à pain d’épices'],
   [/^pain d.epices?/, 'pain d\'epices', 'pain d’épices'],
   [/^biscuits? a la cuill?ere/, 'biscuit a la cuillere', 'biscuits à la cuillère'],
@@ -591,7 +595,7 @@ const ARTICLES = /^(de |d'|du |des |la |le |les |l'|un |une )/;
 
 // Clé (pour comparer) et nom lisible d'un ingrédient
 function nomIngredient(t) {
-  let s = sansQuantite(t).replace(/’/g, "'").split(/[,(:;]| ou | pour /)[0].trim();
+  let s = sansQuantite(t).replace(/’/g, "'").replace(/\([^)]*\)?/g, ' ').split(/[,(:;]| ou | pour /)[0].replace(/\s+/g, ' ').trim();
   for (let i = 0; i < 8; i++) {
     const c = COMPOSES.find(([re]) => re.test(s));
     if (c) return { cle: c[1], nom: c[2] };
