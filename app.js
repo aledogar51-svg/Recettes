@@ -577,7 +577,7 @@ const COMPOSES = [
   [/^sauce barbecue/, 'sauce barbecue', 'sauce barbecue'],
   [/^garam masala/, 'garam masala', 'garam masala'],
   [/^(cinq|5).epices/, 'cinq epices', 'cinq-épices'],
-  [/^filets? mignons?/, 'filet mignon', 'filet mignon'],
+  [/^(filets? )?mignons?/, 'filet mignon', 'filet mignon'],
   [/^nuoc/, 'nuoc mam', 'nuoc-mâm'],
   [/^sauce pimentee|^sriracha/, 'sriracha', 'sriracha'],
   [/^noix de muscade/, 'muscade', 'muscade'],
