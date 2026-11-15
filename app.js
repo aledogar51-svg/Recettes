@@ -4,7 +4,7 @@
 'use strict';
 
 // Version de l'appli (affichée dans Réglages) : à augmenter à chaque mise à jour
-const APP_VERSION = '1.41';
+const APP_VERSION = '1.42';
 const APP_DATE = '15/11/2026';
 
 // ⬇️ Colle ici l'URL de ton Apps Script (elle se termine par /exec)
@@ -215,7 +215,7 @@ const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'ou', 'e
 // Nom de l'ingrédient sans la quantité ni l'unité : « 500 g d'eau de coco » → « eau de coco »
 function sansQuantite(ing) {
   return norm(ing)
-    .replace(/^[\d.,\/½¼¾⅓⅔⅛⅜⅝⅞\s-]+/, '')
+    .replace(/^[\d.,\/½¼¾⅓⅔⅛⅜⅝⅞\s-]+((a|ou)\s+[\d.,\/½¼¾⅓⅔⅛⅜⅝⅞]+\s*)?/, '')
     .replace(/^(c\.?\s*a\s*(soupe|cafe)( rases?| bombees?)?|g|kg|mg|ml|cl|dl|l|cs|cc|c\.?\s?a\s?s\.?|c\.?\s?a\s?c\.?|cuill?eres?\s+a\s+(soupe|cafe)|pincees?|gousses?|tranches?|sachets?|boites?|verres?|bouquets?|brins?|feuilles?|morceaux?|pots?|briques?|filets?|tasses?|noix|noisettes?)\b\.?\s*/, '')
     .replace(/^(de |d'|d’|du |des )/, '').trim();
 }
@@ -583,6 +583,11 @@ const COMPOSES = [
   [/^sauce pimentee|^sriracha/, 'sriracha', 'sriracha'],
   [/^supremes?( de volaille| de poulet)?$|^supremes? de poulet/, 'poulet', 'poulet'],
   [/^beurre de cacahuete|^beurre d.arachide/, 'beurre de cacahuete', 'beurre de cacahuète'],
+  [/^sauce worcestershire/, 'sauce worcestershire', 'sauce Worcestershire'],
+  [/^sauce tomate/, 'sauce tomate', 'sauce tomate'],
+  [/^sauce d.huitre/, 'sauce d\'huitre', 'sauce d’huître'],
+  [/^jus de legumes?/, 'jus de legume', 'jus de légume'],
+  [/^creme aigre/, 'creme aigre', 'crème aigre'],
   [/^noix de muscade/, 'muscade', 'muscade'],
   [/^fonds? de veau/, 'fond de veau', 'fond de veau'],
   [/^fonds? de volaille/, 'fond de volaille', 'fond de volaille'],
